@@ -253,7 +253,7 @@ if __name__ == "__main__":
         # PostProcessingSettings properties (optional)
 
         if "post_process_settings" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings") # returns a reference, so edits persist on the parent
             for post_process_setting in component_desc["post_process_settings"]:
                 post_process_settings.set_editor_property(name=post_process_setting["property"], value=post_process_setting["value"])
 

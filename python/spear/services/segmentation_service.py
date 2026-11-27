@@ -123,9 +123,9 @@ class SegmentationService(spear.Service):
 
         # decode raw segmentation image to raw IDs
         if object_ids_bgra_uint8_image is not None:
-            raw_id_image = spear.rendering.get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8_image)
+            raw_id_image = spear.image.get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8_image)
         elif object_ids_rgba_float16_image is not None:
-            raw_id_image = spear.rendering.get_object_ids_rgba_float16_as_uint32(object_ids_rgba_float16=object_ids_rgba_float16_image)
+            raw_id_image = spear.image.get_object_ids_rgba_float16_as_uint32(object_ids_rgba_float16=object_ids_rgba_float16_image)
         else:
             assert False
 

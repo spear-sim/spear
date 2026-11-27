@@ -52,8 +52,8 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "kinematic_trees"))
-    actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
+    kinematic_trees_dir = spear.path.realpath(args.pipeline_dir, "kinematic_trees")
+    actors_json_file = spear.path.realpath(kinematic_trees_dir, "scene.json")
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
@@ -116,7 +116,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
 
         obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-        numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
+        numerical_parity_obj_path = spear.path.realpath(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix)
         spear.log(f"{log_prefix_str}Reading OBJ file: {numerical_parity_obj_path}")
 
         mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)

@@ -11,57 +11,57 @@ import sys
 
 if __name__ == "__main__":
 
-    project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
-    unreal_project_dir = os.path.realpath(os.path.join(project_dir, "cpp", "unreal_projects", "SpearSim"))
-    unreal_plugins_dir = os.path.realpath(os.path.join(project_dir, "cpp", "unreal_plugins"))
+    project_dir = spear.path.realpath(os.path.dirname(__file__), "..")
+    unreal_project_dir = spear.path.realpath(project_dir, "cpp", "unreal_projects", "SpearSim")
+    unreal_plugins_dir = spear.path.realpath(project_dir, "cpp", "unreal_plugins")
     assert os.path.exists(project_dir)
     assert os.path.exists(unreal_project_dir)
     assert os.path.exists(unreal_plugins_dir)
 
     # entire directories to be removed
     dirs = [
-        os.path.realpath(os.path.join(project_dir, "python_ext", "BUILD")),
-        os.path.realpath(os.path.join(project_dir, "tools", "BUILD")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Binaries")),
-        os.path.realpath(os.path.join(unreal_project_dir, "DerivedDataCache")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Intermediate")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Saved")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Debug")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-DebugGame")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Development")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Shipping")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Test"))]
+        spear.path.realpath(project_dir, "python_ext", "BUILD"),
+        spear.path.realpath(project_dir, "tools", "BUILD"),
+        spear.path.realpath(unreal_project_dir, "Binaries"),
+        spear.path.realpath(unreal_project_dir, "DerivedDataCache"),
+        spear.path.realpath(unreal_project_dir, "Intermediate"),
+        spear.path.realpath(unreal_project_dir, "Saved"),
+        spear.path.realpath(unreal_project_dir, "Standalone-Debug"),
+        spear.path.realpath(unreal_project_dir, "Standalone-DebugGame"),
+        spear.path.realpath(unreal_project_dir, "Standalone-Development"),
+        spear.path.realpath(unreal_project_dir, "Standalone-Shipping"),
+        spear.path.realpath(unreal_project_dir, "Standalone-Test")]
 
     # individual files to be removed
     files = []
 
     # plugin files and directories
     is_valid_plugin_dir = lambda p: \
-        os.path.isdir(os.path.realpath(os.path.join(unreal_plugins_dir, p))) and os.path.exists(os.path.realpath(os.path.join(unreal_plugins_dir, p, f"{p}.uplugin")))
+        os.path.isdir(spear.path.realpath(unreal_plugins_dir, p)) and os.path.exists(spear.path.realpath(unreal_plugins_dir, p, f"{p}.uplugin"))
     plugins = [ p for p in sorted(os.listdir(unreal_plugins_dir)) if is_valid_plugin_dir(p) ]
 
     for plugin in plugins:
-        plugin_dir = os.path.realpath(os.path.join(unreal_plugins_dir, plugin))
+        plugin_dir = spear.path.realpath(unreal_plugins_dir, plugin)
         dirs.extend([
-            os.path.realpath(os.path.join(plugin_dir, "Binaries")),
-            os.path.realpath(os.path.join(plugin_dir, "Intermediate"))])
+            spear.path.realpath(plugin_dir, "Binaries"),
+            spear.path.realpath(plugin_dir, "Intermediate")])
 
     # platform-specific files and directories, we remove generated files from the Build directory selectively,
     # because Build/Mac/Resources/entitlements.plist is checked in
     if sys.platform == "win32":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Windows"))])
+            spear.path.realpath(unreal_project_dir, "Build", "Windows")])
 
     elif sys.platform == "darwin":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "FileOpenOrder"))])
+            spear.path.realpath(unreal_project_dir, "Build", "Mac", "FileOpenOrder")])
         files.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist")),
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter"))])
+            spear.path.realpath(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist"),
+            spear.path.realpath(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter")])
 
     elif sys.platform == "linux":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Linux"))])
+            spear.path.realpath(unreal_project_dir, "Build", "Linux")])
 
     else:
         assert False

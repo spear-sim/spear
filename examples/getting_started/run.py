@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     # create an instance representing a UE application; this will either launch a new UE application or
     # connect to an existing one depending on how user_config.yaml is defined
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()

@@ -35,8 +35,8 @@ def process_scene():
 
     # Load the free-space points and the mutual-visibility graph (the index pairs of mutually visible points)
     # computed by generate_free_space_points.py and generate_free_space_visibility_graph.py.
-    free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
-    visibility_graph_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5"))
+    free_space_points_file = spear.path.realpath(args.pipeline_dir, "free_space_points", "free_space_points.h5")
+    visibility_graph_file = spear.path.realpath(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5")
     spear.log("Reading free-space points file: ", free_space_points_file)
     assert os.path.exists(free_space_points_file)
     spear.log("Reading visibility graph file: ", visibility_graph_file)

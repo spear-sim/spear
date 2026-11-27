@@ -76,7 +76,7 @@ def process_scene():
     # Read the candidate free-space bounding boxes and the indices of the boxes selected to form the connected
     # network (the phase-1 covering boxes plus the phase-2 overlapping boxes) computed by
     # generate_free_space_bounding_boxes.py.
-    free_space_bounding_boxes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5"))
+    free_space_bounding_boxes_file = spear.path.realpath(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5")
     spear.log("Reading free-space bounding boxes file: ", free_space_bounding_boxes_file)
     assert os.path.exists(free_space_bounding_boxes_file)
     with h5py.File(free_space_bounding_boxes_file, "r") as f:
@@ -208,8 +208,8 @@ def process_scene():
     # the path passes through each. The path points are sampled uniformly in time (so their times are uniform, and
     # the first and last are the begin and end points); the waypoints are the points the path was planned through (so
     # their times are generally not uniform). The times let the path and its waypoints be colored consistently.
-    free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths"))
-    free_space_paths_file = os.path.realpath(os.path.join(free_space_dir, "free_space_paths.h5"))
+    free_space_dir = spear.path.realpath(args.pipeline_dir, "free_space_paths")
+    free_space_paths_file = spear.path.realpath(free_space_dir, "free_space_paths.h5")
     spear.log("Writing free-space paths file: ", free_space_paths_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_paths_file, "w") as f:

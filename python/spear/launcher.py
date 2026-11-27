@@ -36,8 +36,8 @@ class Launcher():
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
             # Write a temp config file.
-            temp_dir = os.path.realpath(self._config.SPEAR.LAUNCHER.TEMP_DIR)
-            temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.LAUNCHER.TEMP_CONFIG_FILE))
+            temp_dir = spear.path.realpath(self._config.SPEAR.LAUNCHER.TEMP_DIR)
+            temp_config_file = spear.path.realpath(temp_dir, self._config.SPEAR.LAUNCHER.TEMP_CONFIG_FILE)
 
             spear.log("Writing temp config file: ", temp_config_file)
 
@@ -86,25 +86,25 @@ class Launcher():
                 if sys.platform == "win32":
                     launch_executable_dir_internal = launch_executable_dir
                 elif sys.platform == "darwin":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS"))
+                    launch_executable_dir_internal = spear.path.realpath(launch_executable, "Contents", "MacOS")
                 elif sys.platform == "linux":
                     launch_executable_dir_internal = launch_executable_dir
                 else:
                     assert False
             elif self._config.SPEAR.LAUNCH_MODE == "game":
                 if sys.platform == "win32":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Win64"))
+                    launch_executable_dir_internal = spear.path.realpath(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Win64")
                 elif sys.platform == "darwin":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS"))
+                    launch_executable_dir_internal = spear.path.realpath(launch_executable, "Contents", "MacOS")
                 elif sys.platform == "linux":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Linux"))
+                    launch_executable_dir_internal = spear.path.realpath(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Linux")
                 else:
                     assert False
             else:
                 assert False
 
             if sys.platform == "win32":
-                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*-Cmd.exe"))
+                launch_executable_internal_template = spear.path.realpath(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*-Cmd.exe")
                 if self._config.SPEAR.LAUNCH_MODE == "editor":
                     launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if not "-Win64-" in os.path.basename(p) ]
                 elif self._config.SPEAR.LAUNCH_MODE == "game":
@@ -114,12 +114,12 @@ class Launcher():
                 assert len(launch_executable_internal_paths) == 1
                 launch_executable_internal = launch_executable_internal_paths[0]
             elif sys.platform == "darwin":
-                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*"))
+                launch_executable_internal_template = spear.path.realpath(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*")
                 launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
                 assert len(launch_executable_internal_paths) == 1
                 launch_executable_internal = launch_executable_internal_paths[0]
             elif sys.platform == "linux":
-                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*"))
+                launch_executable_internal_template = spear.path.realpath(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*")
                 if self._config.SPEAR.LAUNCH_MODE == "editor":
                     launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if (not "." in os.path.basename(p)) and (not "-" in os.path.basename(p)) ]
                 elif self._config.SPEAR.LAUNCH_MODE == "game":

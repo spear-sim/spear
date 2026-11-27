@@ -50,12 +50,10 @@ def generate_unreal_geometry(actor):
         # what they were originally.
 
         obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-        raw_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "raw", obj_path_suffix))
+        raw_obj_path = spear.path.realpath(args.export_dir, "unreal_geometry", "raw", obj_path_suffix)
 
-        errors = []
         asset_export_task = unreal.AssetExportTask()
         asset_export_task.set_editor_property(name="automated", value=True)
-        asset_export_task.set_editor_property(name="errors", value=errors)
         asset_export_task.set_editor_property(name="exporter", value=None)
         asset_export_task.set_editor_property(name="filename", value=raw_obj_path)
         asset_export_task.set_editor_property(name="ignore_object_list", value=[])
@@ -80,8 +78,11 @@ def generate_unreal_geometry(actor):
         spear.log("            use_file_archive:   ", asset_export_task.get_editor_property(name="use_file_archive"))
         spear.log("            write_empty_files:  ", asset_export_task.get_editor_property(name="write_empty_files"))
 
-        unreal.Exporter.run_asset_export_task(task=asset_export_task)
-        if len(errors) > 0:
+        # The task stores its own copy of the errors array, so we read it back after running the task.
+        success = unreal.Exporter.run_asset_export_task(task=asset_export_task)
+        errors = asset_export_task.get_editor_property(name="errors")
+        if not success or len(errors) > 0:
+            spear.log("ERROR: Failed to export asset: ", static_mesh_asset_path)
             spear.log(errors)
             assert False
 
@@ -94,8 +95,8 @@ def generate_unreal_geometry(actor):
         mesh.visual = trimesh.visual.ColorVisuals()
 
         obj_dir_suffix = os.path.join(*static_mesh_asset_path.parts[1:-1])
-        numerical_parity_obj_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_dir_suffix))
-        numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
+        numerical_parity_obj_dir = spear.path.realpath(args.export_dir, "unreal_geometry", "numerical_parity", obj_dir_suffix)
+        numerical_parity_obj_path = spear.path.realpath(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix)
         os.makedirs(numerical_parity_obj_dir, exist_ok=True)
         mesh.export(numerical_parity_obj_path, "obj")
 

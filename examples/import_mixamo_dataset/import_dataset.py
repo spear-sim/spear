@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
         # import each FBX file
 
-        fbx_files = [ f for f in sorted(os.listdir(os.path.join(args.filesystem_base_dir, filesystem_sub_dir))) if f.lower().endswith(".fbx") ]
+        fbx_files = [ f for f in sorted(os.listdir(spear.path.realpath(args.filesystem_base_dir, filesystem_sub_dir))) if f.lower().endswith(".fbx") ]
         for fbx_file in fbx_files:
 
             max_content_dir_length = (max_content_path_length - len(args.content_base_dir) - 2*(len("BP_") + len(fbx_file) + len("_Anim") - len(".fbx"))) // num_content_dirs_after_base_dir
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             else:
                 spear.log("        Directory doesn't exist: ", fbx_content_path)
 
-            fbx_filesystem_path = os.path.join(args.filesystem_base_dir, filesystem_sub_dir, fbx_file)
+            fbx_filesystem_path = spear.path.realpath(args.filesystem_base_dir, filesystem_sub_dir, fbx_file)
 
             spear.log(f"        Importing {fbx_filesystem_path} to {fbx_content_path}...")
 

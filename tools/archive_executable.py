@@ -13,7 +13,7 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument("--build-config", required=True)
 parser.add_argument("--version-tag", required=True)
-parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-dir", default=spear.path.realpath(os.path.dirname(__file__), "BUILD"))
 args = parser.parse_args()
 
 assert os.path.exists(args.build_dir)
@@ -36,9 +36,9 @@ if __name__ == "__main__":
     else:
         assert False
 
-    archive_contents_root_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{platform_name_outer_dir}-{args.build_config}", platform_name_inner_dir))
-    archive_dir  = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{platform_name_outer_dir}-{args.build_config}-Archive"))
-    archive_file = os.path.realpath(os.path.join(archive_dir, f"SpearSim-{args.version_tag}-{platform_name_archive}-{args.build_config}"))
+    archive_contents_root_dir = spear.path.realpath(args.build_dir, f"SpearSim-{platform_name_outer_dir}-{args.build_config}", platform_name_inner_dir)
+    archive_dir  = spear.path.realpath(args.build_dir, f"SpearSim-{platform_name_outer_dir}-{args.build_config}-Archive")
+    archive_file = spear.path.realpath(archive_dir, f"SpearSim-{args.version_tag}-{platform_name_archive}-{args.build_config}")
 
     # create the temp directory
     spear.log("Creating directory if it does not already exist: ", archive_dir)

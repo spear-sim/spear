@@ -17,7 +17,7 @@ parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--skip-cook-default-maps", action="store_true")
 parser.add_argument("--cook-dirs", nargs="*")
 parser.add_argument("--cook-maps", nargs="*")
-parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-dir", default=spear.path.realpath(os.path.dirname(__file__), "BUILD"))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
 
 assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
@@ -26,9 +26,9 @@ assert os.path.exists(args.unreal_engine_dir)
 
 if __name__ == "__main__":
 
-    repo_dir           = os.path.realpath(os.path.join(args.build_dir, "spear"))
-    unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
-    uproject           = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
+    repo_dir           = spear.path.realpath(args.build_dir, "spear")
+    unreal_project_dir = spear.path.realpath(repo_dir, "cpp", "unreal_projects", "SpearSim")
+    uproject           = spear.path.realpath(unreal_project_dir, "SpearSim.uproject")
 
     spear.tools.validate_build_environment()
 
@@ -36,17 +36,19 @@ if __name__ == "__main__":
 
     # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
-        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
+        archive_dir           = spear.path.realpath(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned")
         run_uat_platform_args = []
         unreal_tmp_dir        = ""
 
     elif sys.platform == "darwin":
-        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
+        archive_dir           = spear.path.realpath(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned")
         run_uat_platform_args = ["-specifiedarchitecture=arm64+x86_64"]
+        # We don't use spear.path.realpath(...) here, because we want to remove the directory at this path, not
+        # the directory it points to if it is a symlink.
         unreal_tmp_dir        = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
     elif sys.platform == "linux":
-        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}"))
+        archive_dir           = spear.path.realpath(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}")
         run_uat_platform_args = []
         unreal_tmp_dir        = ""
 
@@ -73,8 +75,8 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
 
-        bootstrap_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "BootstrapPackagedGame-Win64-Shipping.exe"))
-        bootstrap_backup_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "BootstrapPackagedGame-Win64-Shipping.backup.exe"))
+        bootstrap_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "BootstrapPackagedGame-Win64-Shipping.exe")
+        bootstrap_backup_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "BootstrapPackagedGame-Win64-Shipping.backup.exe")
 
         spear.log("Determining if file has any signatures: ", bootstrap_bin)
 

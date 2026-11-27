@@ -72,8 +72,8 @@ def process_scene():
 
     # Save the free-space points. The component oriented bounding boxes are recomputed from unreal_metadata/scene.json
     # by each downstream stage, so we only store the free-space points themselves here.
-    free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points"))
-    free_space_points_file = os.path.realpath(os.path.join(free_space_dir, "free_space_points.h5"))
+    free_space_dir = spear.path.realpath(args.pipeline_dir, "free_space_points")
+    free_space_points_file = spear.path.realpath(free_space_dir, "free_space_points.h5")
     spear.log("Writing free-space points file: ", free_space_points_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_points_file, "w") as f:

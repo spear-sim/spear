@@ -119,7 +119,7 @@ def get_plugin_dirs(unreal_project_dir=None, unreal_engine_dir=None, follow_syml
     assert unreal_project_dir is not None
 
     if follow_symlinks:
-        path_func = lambda path: os.path.realpath(path)
+        path_func = spear.path.realpath
     else:
         path_func = lambda path: path
 
@@ -135,7 +135,7 @@ def get_plugin_dirs(unreal_project_dir=None, unreal_engine_dir=None, follow_syml
     if "AdditionalPluginDirectories" in uproject_dict:
         for additional_plugins_dir in uproject_dict["AdditionalPluginDirectories"]:
             if os.path.isabs(additional_plugins_dir):
-                plugins_dirs.append(additional_plugins_dir)
+                plugins_dirs.append(path_func(additional_plugins_dir))
             else:
                 plugins_dirs.append(path_func(os.path.join(unreal_project_dir, additional_plugins_dir)))
 
@@ -154,7 +154,7 @@ def get_plugin_dirs(unreal_project_dir=None, unreal_engine_dir=None, follow_syml
 def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None, unreal_engine_dir=None, plugin_dirs=None, follow_symlinks=False):
 
     if follow_symlinks:
-        path_func = lambda path: os.path.realpath(path)
+        path_func = spear.path.realpath
     else:
         path_func = lambda path: path
 
@@ -184,7 +184,7 @@ def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None,
         filesystem_path = path_func(os.path.join(filesystem_base_dir, content_sub_path))
         if os.path.exists(filesystem_path) and os.path.isdir(filesystem_path):
             return filesystem_path
-        elif os.path.islink(filesystem_path) and os.path.exists(os.path.realpath(filesystem_path)):
+        elif os.path.islink(filesystem_path) and os.path.exists(spear.path.realpath(filesystem_path)):
             return filesystem_path
         else:
             content_file_tokens = content_path_tokens[-1].split(".")

@@ -32,8 +32,8 @@ parser.add_argument("--apple-id", required=True)
 parser.add_argument("--apple-password", required=True)
 parser.add_argument("--apple-team-id", required=True)
 parser.add_argument("--build-config", required=True)
-parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-parser.add_argument("--entitlements-file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Build", "Mac", "Resources", "entitlements.plist")))
+parser.add_argument("--build-dir", default=spear.path.realpath(os.path.dirname(__file__), "BUILD"))
+parser.add_argument("--entitlements-file", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Build", "Mac", "Resources", "entitlements.plist"))
 args = parser.parse_args()
 
 assert os.path.exists(args.build_dir)
@@ -43,9 +43,9 @@ assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "T
 
 if __name__ == "__main__":
 
-    input_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Mac-{args.build_config}-Unsigned"))
-    notarize_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Mac-{args.build_config}-Notarize"))
-    output_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Mac-{args.build_config}"))
+    input_dir = spear.path.realpath(args.build_dir, f"SpearSim-Mac-{args.build_config}-Unsigned")
+    notarize_dir = spear.path.realpath(args.build_dir, f"SpearSim-Mac-{args.build_config}-Notarize")
+    output_dir = spear.path.realpath(args.build_dir, f"SpearSim-Mac-{args.build_config}")
 
     assert os.path.exists(input_dir)
 
@@ -72,30 +72,30 @@ if __name__ == "__main__":
 
     executable_app = f"{executable}.app"
     executable_zip = f"{executable}.zip"
-    executable_app_path = os.path.realpath(os.path.join(output_dir, "Mac", executable_app))
+    executable_app_path = spear.path.realpath(output_dir, "Mac", executable_app)
     assert os.path.exists(executable_app_path)
 
     # files that need to be codesigned
     sign_files = [
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Apple", "MetalShaderConverter", "Mac", "libmetalirconverter.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "EOSSDK", "Mac", "libEOSSDK-Mac-Shipping.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac/libtbb.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac/libtbbmalloc.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "OpenColorIO", "Mac", "libOpenColorIO.2.3.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Plugins", "NNE", "NNERuntimeORT", "Binaries", "ThirdParty", "Onnxruntime", "Mac", "libonnxruntime.1.17.1.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "Engine", "Plugins", "NNE", "NNERuntimeORT", "Binaries", "ThirdParty", "Onnxruntime", "Mac", "libonnxruntime.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_atomic-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_chrono-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_filesystem-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_iostreams-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_program_options-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_python311-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_regex-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_system-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_thread-mt-a64.dylib")),
-        os.path.realpath(os.path.join(executable_app_path, "Contents", "MacOS", executable))]
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Apple", "MetalShaderConverter", "Mac", "libmetalirconverter.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "EOSSDK", "Mac", "libEOSSDK-Mac-Shipping.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac/libtbb.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Intel", "TBB", "Mac/libtbbmalloc.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Ogg", "Mac", "libogg.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "OpenColorIO", "Mac", "libOpenColorIO.2.3.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Binaries", "ThirdParty", "Vorbis", "Mac", "libvorbis.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Plugins", "NNE", "NNERuntimeORT", "Binaries", "ThirdParty", "Onnxruntime", "Mac", "libonnxruntime.1.17.1.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "Engine", "Plugins", "NNE", "NNERuntimeORT", "Binaries", "ThirdParty", "Onnxruntime", "Mac", "libonnxruntime.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_atomic-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_chrono-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_filesystem-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_iostreams-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_program_options-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_python311-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_regex-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_system-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "UE", "SpearSim", "Binaries", "Mac", "libboost_thread-mt-a64.dylib"),
+        spear.path.realpath(executable_app_path, "Contents", "MacOS", executable)]
 
     # Creating Distribution-Signed Code for Mac
     #     https://developer.apple.com/forums/thread/701514#701514021
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     # Customizing the Notarization Workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name in the archive (-keepParent)
     # while preserving HFS metadata (--sequesterRsrc)
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
-    notarization_zip = os.path.realpath(os.path.join(notarize_dir, executable_zip))
+    notarization_zip = spear.path.realpath(notarize_dir, executable_zip)
     cmd = ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent",
         executable_app_path,
         notarization_zip]
@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
     # Fetching the Notary Log
     #     https://developer.apple.com/forums/thread/705839
-    log_file = os.path.realpath(os.path.join(notarize_dir, "log.json"))
+    log_file = spear.path.realpath(notarize_dir, "log.json")
     cmd = ["xcrun", "notarytool", "log", submission_id, "--apple-id", args.apple_id, "--team-id", args.apple_team_id, "--password", args.apple_password, log_file]
     spear.tools.run_cmd(cmd=cmd)
     spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")

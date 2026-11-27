@@ -51,3 +51,20 @@ def tone_map_hypersim(image, mask, as_dict=None):
         return {"image_tone_map": image_tone_map, "scale": scale, "gamma": gamma}
     else:
         return image_tone_map
+
+# Map depth values to [0, 1] for visualization. 0.0 corresponds to the minimum finite depth value, and 1.0 corresponds to
+# the minimum finite depth value plus max_depth_range, or to the maximum finite depth value if it is closer. Depth
+# values are clipped to [0, 1].
+def normalize_depth(depth, max_depth_range):
+
+    finite_depth = depth[np.isfinite(depth)]
+
+    if finite_depth.size == 0:
+        depth_min = 0.0
+        depth_max = max_depth_range
+    else:
+        depth_min = np.min(finite_depth)
+        depth_max = min(np.max(finite_depth), depth_min + max_depth_range)
+
+    eps = 0.000001 # if all finite depth values are equal, avoid dividing by zero
+    return np.clip((depth - depth_min) / max(depth_max - depth_min, eps), 0.0, 1.0)

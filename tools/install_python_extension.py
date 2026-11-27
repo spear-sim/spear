@@ -38,7 +38,8 @@ if __name__ == "__main__":
         else:
             optimization_flags = "/O2"
 
-        common_cxx_flags = f"/std:c++20 {optimization_flags} /EHsc /GR-"
+        # /Zc:preprocessor enables MSVC's standard-conforming preprocessor, which is needed for __VA_OPT__ in SP_LOG(...)
+        common_cxx_flags = f"/std:c++20 /Zc:preprocessor {optimization_flags} /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
         cmake_cxx_standard_libraries = ""
         cmake_exe_linker_flags = ""
@@ -70,18 +71,18 @@ if __name__ == "__main__":
         assert os.path.exists(args.unreal_engine_dir)
         assert args.cxx_compiler is None
 
-        unreal_engine_dir = os.path.realpath(args.unreal_engine_dir)
+        unreal_engine_dir = spear.path.realpath(args.unreal_engine_dir)
 
-        linux_clang_path_template = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*"))
+        linux_clang_path_template = spear.path.realpath(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*")
         linux_clang_paths = glob.glob(linux_clang_path_template)
         assert len(linux_clang_paths) == 1
         linux_clang_path = linux_clang_paths[0]
 
         spear.log("Found Unreal clang: ", linux_clang_path)
 
-        linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
-        linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
-        linux_libcpp_lib_dir     = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu"))
+        linux_clang_bin_dir      = spear.path.realpath(linux_clang_path, "x86_64-unknown-linux-gnu", "bin")
+        linux_libcpp_include_dir = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
+        linux_libcpp_lib_dir     = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
 
         assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
         assert os.path.isdir(linux_libcpp_lib_dir) and os.listdir(linux_libcpp_lib_dir)
@@ -89,6 +90,8 @@ if __name__ == "__main__":
         spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
         spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
 
+        # We don't use spear.path.realpath(...) here, because clang++ is typically a symlink to clang, and clang decides
+        # whether to compile C or C++ based on the name it is invoked with.
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
         # Don't use -fexperimental-library here, because this will attempt to link against a libc++ library
@@ -128,8 +131,8 @@ if __name__ == "__main__":
     # spear_ext
     #
 
-    python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
-    build_dir = os.path.realpath(os.path.join(python_ext_dir, "BUILD"))
+    python_ext_dir = spear.path.realpath(os.path.dirname(__file__), "..", "python_ext")
+    build_dir = spear.path.realpath(python_ext_dir, "BUILD")
 
     if args.wheel:
         spear.log("Building the spear_ext Python extension module...")
@@ -155,8 +158,8 @@ if __name__ == "__main__":
 
     # generate dSYM debug symbols on macOS
     if args.debug and sys.platform == "darwin":
-        python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
-        so_files = glob.glob(os.path.join(python_ext_dir, "**", "*.so"), recursive=True)
+        python_ext_dir = spear.path.realpath(os.path.dirname(__file__), "..", "python_ext")
+        so_files = glob.glob(spear.path.realpath(python_ext_dir, "**", "*.so"), recursive=True)
         so_files = [ so_file for so_file in so_files if ".dSYM" not in so_file ] # skip DWARF files inside previously generated .dSYM bundles
         for so_file in so_files:
             cmd = ["dsymutil", so_file, "-o", f"{so_file}.dSYM"]

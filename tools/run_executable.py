@@ -32,16 +32,16 @@ if __name__ == "__main__":
         executable = args.executable
     else:
         if sys.platform == "win32":
-            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Windows", "SpearSim.exe"))
+            executable = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Windows", "SpearSim.exe")
         elif sys.platform == "darwin":
-            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Mac", "SpearSim.app"))
+            executable = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Mac", "SpearSim.app")
         elif sys.platform == "linux":
-            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Linux", "SpearSim.sh"))
+            executable = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Linux", "SpearSim.sh")
         else:
             assert False
 
     if args.config_files is not None:
-        user_config_files = [ os.path.realpath(config_file) for config_file in args.config_files ]
+        user_config_files = [ spear.path.realpath(config_file) for config_file in args.config_files ]
     else:
         user_config_files = []
 

@@ -21,7 +21,7 @@ def script():
         spear.log(f"waiting... delta_time={spear.editor.get_script_delta_time()}")
         yield
 
-    screenshot = os.path.realpath(os.path.join(os.path.dirname(file), "screenshot.png"))
+    screenshot = spear.path.realpath(os.path.dirname(file), "screenshot.png")
     spear.log("Saving screenshot: ", screenshot)
     unreal.AutomationLibrary.take_high_res_screenshot(res_x=1024, res_y=1024, filename=screenshot)
 

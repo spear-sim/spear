@@ -26,8 +26,8 @@ def process_content():
     asset_datas = sorted(asset_datas, key=lambda ad: f"{ad.package_name}.{ad.asset_name}")
     assets = { f"{ad.package_name}.{ad.asset_name}": spear.editor.get_asset_desc(asset_data=ad) for ad in asset_datas }
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
-    content_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "content.json"))
+    unreal_metadata_dir = spear.path.realpath(args.export_dir, "unreal_metadata")
+    content_json_file = spear.path.realpath(unreal_metadata_dir, "content.json")
     spear.log("Writing JSON file: " + content_json_file)
     os.makedirs(unreal_metadata_dir, exist_ok=True)
     with open(content_json_file, "w") as f:

@@ -17,8 +17,8 @@ parser.add_argument("--destination-content-path", required=True)
 parser.add_argument("--source-content-path", required=True)
 parser.add_argument("--source-unreal-project-dir", required=True)
 parser.add_argument("--unreal-engine-dir", required=True)
-parser.add_argument("--destination-unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-parser.add_argument("--temp-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
+parser.add_argument("--destination-unreal-project-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
+parser.add_argument("--temp-dir", default=spear.path.realpath(os.path.dirname(__file__), "tmp"))
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
@@ -47,11 +47,11 @@ assert pathlib.PurePosixPath(args.destination_content_path).parts[1] == "Game"
 if __name__ == "__main__":
 
     if sys.platform == "win32":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe")
     elif sys.platform == "darwin":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor")
     elif sys.platform == "linux":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor")
     else:
         assert False
 
@@ -59,19 +59,19 @@ if __name__ == "__main__":
     # projects
     #
 
-    reference_unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "DefaultProjectBp"))
+    reference_unreal_project_dir = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "DefaultProjectBp")
     reference_unreal_project_dir_name = os.path.split(reference_unreal_project_dir)[1]
-    reference_uprojects = glob.glob(os.path.realpath(os.path.join(reference_unreal_project_dir, "*.uproject")))
+    reference_uprojects = glob.glob(spear.path.realpath(reference_unreal_project_dir, "*.uproject"))
     assert len(reference_uprojects) == 1
     reference_uproject = reference_uprojects[0]
     reference_uproject_name = os.path.splitext(os.path.split(reference_uproject)[1])[0]
 
-    source_unreal_project_dir = os.path.realpath(args.source_unreal_project_dir)
+    source_unreal_project_dir = spear.path.realpath(args.source_unreal_project_dir)
 
-    temp_unreal_project_dir = os.path.realpath(os.path.join(args.temp_dir, reference_unreal_project_dir_name))
-    temp_uproject = os.path.realpath(os.path.join(temp_unreal_project_dir, f"{reference_uproject_name}.uproject"))
+    temp_unreal_project_dir = spear.path.realpath(args.temp_dir, reference_unreal_project_dir_name)
+    temp_uproject = spear.path.realpath(temp_unreal_project_dir, f"{reference_uproject_name}.uproject")
 
-    destination_unreal_project_dir = os.path.realpath(args.destination_unreal_project_dir)
+    destination_unreal_project_dir = spear.path.realpath(args.destination_unreal_project_dir)
 
     #
     # filesystem paths
@@ -96,6 +96,15 @@ if __name__ == "__main__":
         content_path=args.destination_content_path,
         unreal_project_dir=destination_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
+
+    # get_filesystem_path_from_content_path(...) can only determine the extension of a file (e.g., .uasset or .umap) if
+    # the file already exists, so if we're importing a single file, we use the extension of the source file for the
+    # other filesystem paths, because the corresponding files don't exist yet.
+    if os.path.isfile(source_unreal_project_source_content_filesystem_path):
+        extension = os.path.splitext(source_unreal_project_source_content_filesystem_path)[1]
+        temp_unreal_project_source_content_filesystem_path = os.path.splitext(temp_unreal_project_source_content_filesystem_path)[0] + extension
+        temp_unreal_project_destination_content_filesystem_path = os.path.splitext(temp_unreal_project_destination_content_filesystem_path)[0] + extension
+        destination_unreal_project_destination_content_filesystem_path = os.path.splitext(destination_unreal_project_destination_content_filesystem_path)[0] + extension
 
     #
     # copy reference project to temp project
@@ -127,6 +136,7 @@ if __name__ == "__main__":
     # If follow_symlinks is false and src is a symbolic link, a new symbolic link will be created instead of
     # copying the file src points to.
     if os.path.isfile(source_unreal_project_source_content_filesystem_path):
+        os.makedirs(os.path.dirname(temp_unreal_project_source_content_filesystem_path), exist_ok=True)
         spear.log(f"Copying file: {source_unreal_project_source_content_filesystem_path} -> {temp_unreal_project_source_content_filesystem_path}")
         shutil.copyfile(source_unreal_project_source_content_filesystem_path, temp_unreal_project_source_content_filesystem_path, follow_symlinks=True)
 
@@ -149,7 +159,7 @@ if __name__ == "__main__":
     # We could use run_editor_script.py here, but calling python scripts from other python scripts
     # isn't any more convenient than calling the editor directly.
 
-    script = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "editor", "editor_asset_library_utils_rename_content.py"))
+    script = spear.path.realpath(os.path.dirname(__file__), "..", "editor", "editor_asset_library_utils_rename_content.py")
 
     script_args = [
         spear.tools.normalize_unreal_cmd_path(path=script),
@@ -177,6 +187,7 @@ if __name__ == "__main__":
         if os.path.exists(destination_unreal_project_destination_content_filesystem_path):
             spear.log("File exists, removing: ", destination_unreal_project_destination_content_filesystem_path)
             os.remove(destination_unreal_project_destination_content_filesystem_path)
+        os.makedirs(os.path.dirname(destination_unreal_project_destination_content_filesystem_path), exist_ok=True)
         spear.log(f"Copying file: {temp_unreal_project_destination_content_filesystem_path} -> {destination_unreal_project_destination_content_filesystem_path}")
         shutil.copyfile(temp_unreal_project_destination_content_filesystem_path, destination_unreal_project_destination_content_filesystem_path, follow_symlinks=True)
 

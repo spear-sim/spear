@@ -43,8 +43,8 @@ def process_scene():
     # Load the planned paths and the camera keyframes computed by generate_free_space_paths.py and
     # generate_free_space_camera_keyframes.py. The keyframes store a camera-to-world rotation matrix at each of a set
     # of normalized times along each path; the camera position at each keyframe is the path's position at that time.
-    free_space_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths", "free_space_paths.h5"))
-    free_space_camera_keyframes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_keyframes", "free_space_camera_keyframes.h5"))
+    free_space_paths_file = spear.path.realpath(args.pipeline_dir, "free_space_paths", "free_space_paths.h5")
+    free_space_camera_keyframes_file = spear.path.realpath(args.pipeline_dir, "free_space_camera_keyframes", "free_space_camera_keyframes.h5")
     spear.log("Reading free-space paths file: ", free_space_paths_file)
     assert os.path.exists(free_space_paths_file)
     spear.log("Reading free-space camera keyframes file: ", free_space_camera_keyframes_file)

@@ -20,7 +20,7 @@ parser.add_argument("--skip-boost", action="store_true")
 parser.add_argument("--skip-rpclib", action="store_true")
 parser.add_argument("--skip-yaml-cpp", action="store_true")
 parser.add_argument("--verbose", action="store_true")
-parser.add_argument("--third-party-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
+parser.add_argument("--third-party-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "third_party"))
 args = parser.parse_args()
 
 assert os.path.exists(args.third_party_dir)
@@ -28,7 +28,7 @@ assert os.path.exists(args.third_party_dir)
 
 if __name__ == "__main__":
 
-    third_party_dir = os.path.realpath(args.third_party_dir)
+    third_party_dir = spear.path.realpath(args.third_party_dir)
 
     spear.tools.validate_build_environment()
 
@@ -93,17 +93,17 @@ if __name__ == "__main__":
         assert args.boost_toolset_version is None
         assert args.cxx_compiler is None
 
-        unreal_engine_dir = os.path.realpath(args.unreal_engine_dir)
+        unreal_engine_dir = spear.path.realpath(args.unreal_engine_dir)
 
-        linux_clang_path_template = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*"))
+        linux_clang_path_template = spear.path.realpath(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*")
         linux_clang_paths = glob.glob(linux_clang_path_template)
         assert len(linux_clang_paths) == 1
         linux_clang_path = linux_clang_paths[0]
 
         spear.log("Found Unreal clang: ", linux_clang_path)
 
-        linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
-        linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
+        linux_clang_bin_dir      = spear.path.realpath(linux_clang_path, "x86_64-unknown-linux-gnu", "bin")
+        linux_libcpp_include_dir = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
 
         assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
 
@@ -111,6 +111,8 @@ if __name__ == "__main__":
 
         boost_toolset = "clang"
         boost_toolset_version = ""
+        # We don't use spear.path.realpath(...) here, because clang++ is typically a symlink to clang, and clang decides
+        # whether to compile C or C++ based on the name it is invoked with.
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
         boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} : {cxx_compiler} ;\n"
@@ -140,19 +142,19 @@ if __name__ == "__main__":
 
         spear.log("Building boost...")
 
-        boost_dir = os.path.realpath(os.path.join(third_party_dir, "boost"))
-        user_config_file = os.path.realpath(os.path.join(boost_dir, "user-config.jam"))
+        boost_dir = spear.path.realpath(third_party_dir, "boost")
+        user_config_file = spear.path.realpath(boost_dir, "user-config.jam")
 
         # explicitly deep clean because "./b2 --clean-all" and "./b2 stage --clean" will leave files behind
 
         remove_dirs = [
-            os.path.realpath(os.path.join(boost_dir, "bin.v2")),
-            os.path.realpath(os.path.join(boost_dir, "boost")),
-            os.path.realpath(os.path.join(boost_dir, "stage"))]
+            spear.path.realpath(boost_dir, "bin.v2"),
+            spear.path.realpath(boost_dir, "boost"),
+            spear.path.realpath(boost_dir, "stage")]
 
         remove_files = [
-            os.path.realpath(os.path.join(boost_dir, "project-config.jam")),
-            os.path.realpath(os.path.join(boost_dir, "user-config.jam"))]
+            spear.path.realpath(boost_dir, "project-config.jam"),
+            spear.path.realpath(boost_dir, "user-config.jam")]
 
         remove_files = []
 
@@ -228,7 +230,7 @@ if __name__ == "__main__":
 
         spear.log("Building rpclib...")
 
-        build_dir = os.path.realpath(os.path.join(third_party_dir, "rpclib", "BUILD", platform_dir))
+        build_dir = spear.path.realpath(third_party_dir, "rpclib", "BUILD", platform_dir)
 
         if os.path.isdir(build_dir):
             spear.log("Directory exists, removing: ", build_dir)
@@ -292,7 +294,7 @@ if __name__ == "__main__":
     if not args.skip_yaml_cpp:
 
         spear.log("Building yaml-cpp...")
-        build_dir = os.path.realpath(os.path.join(third_party_dir, "yaml-cpp", "BUILD", platform_dir))
+        build_dir = spear.path.realpath(third_party_dir, "yaml-cpp", "BUILD", platform_dir)
 
         if os.path.isdir(build_dir):
             spear.log("Directory exists, removing: ", build_dir)

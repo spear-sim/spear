@@ -16,16 +16,16 @@ parser.add_argument("--commit-id")
 parser.add_argument("--skip-clone-github-repo", action="store_true")
 parser.add_argument("--skip-build-third-party-libs", action="store_true")
 parser.add_argument("--skip-copy-engine-content", action="store_true")
-parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-dir", default=spear.path.realpath(os.path.dirname(__file__), "BUILD"))
 parser.add_argument("--conda-env", default="spear-env")
 args = parser.parse_args()
 
 
 if __name__ == "__main__":
 
-    repo_dir           = os.path.realpath(os.path.join(args.build_dir, "spear"))
-    unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
-    third_party_dir    = os.path.realpath(os.path.join(repo_dir, "third_party"))
+    repo_dir           = spear.path.realpath(args.build_dir, "spear")
+    unreal_project_dir = spear.path.realpath(repo_dir, "cpp", "unreal_projects", "SpearSim")
+    third_party_dir    = spear.path.realpath(repo_dir, "third_party")
 
     spear.tools.validate_build_environment()
 
@@ -46,6 +46,8 @@ if __name__ == "__main__":
             os.chdir(repo_dir)
             cmd = ["git", "reset", "--hard", args.commit_id]
             spear.tools.run_cmd(cmd=cmd)
+            cmd = ["git", "submodule", "update", "--init", "--recursive"] # git reset doesn't update submodules
+            spear.tools.run_cmd(cmd=cmd)
             os.chdir(cwd)
 
     if not args.skip_build_third_party_libs:
@@ -62,7 +64,7 @@ if __name__ == "__main__":
         # build third-party libs
         cmd = [
             "python",
-            os.path.realpath(os.path.join(os.path.dirname(__file__), "build_third_party_libs.py")),
+            spear.path.realpath(os.path.dirname(__file__), "build_third_party_libs.py"),
             "--third-party-dir", third_party_dir] + \
             build_third_party_libs_platform_args
         spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
@@ -72,7 +74,7 @@ if __name__ == "__main__":
         # copy starter content
         cmd = [
             "python",
-            os.path.realpath(os.path.join(os.path.dirname(__file__), "copy_engine_content.py")),
+            spear.path.realpath(os.path.dirname(__file__), "copy_engine_content.py"),
             "--unreal-engine-dir", args.unreal_engine_dir,
             "--unreal-project-dir", unreal_project_dir]
         spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)

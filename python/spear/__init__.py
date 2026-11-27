@@ -54,9 +54,10 @@ from .utils.system_utils import configure_system
 from .utils.func_utils import CallSyncEntryPointCaller, CaseInsensitiveDict, EditorCallSyncEntryPointCaller, Future, PropertyValue, Service, Shared
 
 # import entire utils files into child namespaces
+from .utils import image_utils as image
 from .utils import math_utils as math
+from .utils import path_utils as path
 from .utils import pipeline_utils as pipeline
-from .utils import rendering_utils as rendering
 from .utils import tool_utils as tools
 
 # conditional imports

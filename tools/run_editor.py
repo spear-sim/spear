@@ -16,7 +16,7 @@ parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--map")
 parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--editor-launch-mode", default="editor")
-parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--unreal-project-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
@@ -26,21 +26,21 @@ assert os.path.exists(args.unreal_project_dir)
 if __name__ == "__main__":
 
     if sys.platform == "win32":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe")
     elif sys.platform == "darwin":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app")
     elif sys.platform == "linux":
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor")
     else:
         assert False
 
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    unreal_project_dir = spear.path.realpath(args.unreal_project_dir)
+    uprojects = glob.glob(spear.path.realpath(unreal_project_dir, "*.uproject"))
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
     if args.config_files is not None:
-        user_config_files = [ os.path.realpath(config_file) for config_file in args.config_files ]
+        user_config_files = [ spear.path.realpath(config_file) for config_file in args.config_files ]
     else:
         user_config_files = []
 

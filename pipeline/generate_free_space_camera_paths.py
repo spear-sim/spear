@@ -30,8 +30,8 @@ def process_scene():
     # Read the planned paths (positions sampled uniformly in time along each path, with their normalized times) and
     # the camera keyframes (a camera-to-world rotation matrix at each of a sparse set of normalized times along each
     # path) computed by generate_free_space_paths.py and generate_free_space_camera_keyframes.py.
-    free_space_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths", "free_space_paths.h5"))
-    free_space_camera_keyframes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_keyframes", "free_space_camera_keyframes.h5"))
+    free_space_paths_file = spear.path.realpath(args.pipeline_dir, "free_space_paths", "free_space_paths.h5")
+    free_space_camera_keyframes_file = spear.path.realpath(args.pipeline_dir, "free_space_camera_keyframes", "free_space_camera_keyframes.h5")
     spear.log("Reading free-space paths file: ", free_space_paths_file)
     assert os.path.exists(free_space_paths_file)
     spear.log("Reading free-space camera keyframes file: ", free_space_camera_keyframes_file)
@@ -73,8 +73,8 @@ def process_scene():
     # are the interpolated camera orientations. Each rotation matrix maps points (as column vectors) from camera space
     # to world space, following the Unreal convention that the camera's +X is its look direction, +Y its right, and
     # +Z its up (so the matrix's columns are those three directions in world space).
-    free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_paths"))
-    free_space_camera_paths_file = os.path.realpath(os.path.join(free_space_dir, "free_space_camera_paths.h5"))
+    free_space_dir = spear.path.realpath(args.pipeline_dir, "free_space_camera_paths")
+    free_space_camera_paths_file = spear.path.realpath(free_space_dir, "free_space_camera_paths.h5")
     spear.log("Writing free-space camera paths file: ", free_space_camera_paths_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_camera_paths_file, "w") as f:

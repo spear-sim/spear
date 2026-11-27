@@ -4,13 +4,8 @@
 #
 
 import os
+import spear
 import yacs.config
-
-# ordered from low-level to high-level
-default_config_files = [
-    os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "config", "default_config.sp_core.yaml")),
-    os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "config", "default_config.sp_services.yaml")),
-    os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "config", "default_config.spear.yaml")) ]
 
 #
 # This function returns a config object, obtained by loading and merging a list of config
@@ -28,6 +23,12 @@ def get_config(user_config_files=None):
 
     # create a single CfgNode that will eventually contain data from all config files
     config = yacs.config.CfgNode(new_allowed=True)
+
+    # ordered from low-level to high-level
+    default_config_files = [
+        spear.path.realpath(os.path.dirname(__file__), "..", "config", "default_config.sp_core.yaml"),
+        spear.path.realpath(os.path.dirname(__file__), "..", "config", "default_config.sp_services.yaml"),
+        spear.path.realpath(os.path.dirname(__file__), "..", "config", "default_config.spear.yaml") ]
 
     for c in default_config_files:
         config.merge_from_file(c)

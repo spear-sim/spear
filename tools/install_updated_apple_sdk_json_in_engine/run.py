@@ -18,9 +18,9 @@ assert os.path.exists(args.unreal_engine_dir)
 
 if __name__ == "__main__":
 
-    apple_sdk_json_file = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Config", "Apple", "Apple_SDK.json"))
+    apple_sdk_json_file = spear.path.realpath(args.unreal_engine_dir, "Engine", "Config", "Apple", "Apple_SDK.json")
     apple_sdk_json_bak_file = apple_sdk_json_file + ".bak"
-    new_apple_sdk_json_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "Apple_SDK.json"))
+    new_apple_sdk_json_file = spear.path.realpath(os.path.dirname(__file__), "Apple_SDK.json")
 
     assert os.path.exists(apple_sdk_json_file)
 

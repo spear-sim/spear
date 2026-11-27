@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         # get config
         if args.config_files is not None:
-            user_config_files = [ os.path.realpath(config_file) for config_file in args.config_files ]
+            user_config_files = [ spear.path.realpath(config_file) for config_file in args.config_files ]
         else:
             user_config_files = []
         config = spear.get_config(user_config_files=user_config_files)

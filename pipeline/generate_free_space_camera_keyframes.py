@@ -50,7 +50,7 @@ def process_scene():
 
     # Read the planned paths computed by generate_free_space_paths.py. Each path is a sequence of points sampled
     # uniformly in time along it, with the corresponding normalized times in [0, 1].
-    free_space_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths", "free_space_paths.h5"))
+    free_space_paths_file = spear.path.realpath(args.pipeline_dir, "free_space_paths", "free_space_paths.h5")
     spear.log("Reading free-space paths file: ", free_space_paths_file)
     assert os.path.exists(free_space_paths_file)
     with h5py.File(free_space_paths_file, "r") as f:
@@ -62,7 +62,7 @@ def process_scene():
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
     # offscreen and which scene to open (the scene must be the one this pipeline directory was generated from).
-    config = spear.get_config(user_config_files=[ os.path.realpath(config_file) for config_file in args.config_files ])
+    config = spear.get_config(user_config_files=[ spear.path.realpath(config_file) for config_file in args.config_files ])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
@@ -120,7 +120,7 @@ def process_scene():
                         bSweep=False, bTeleport=True)
                 with instance.end_frame():
                     object_ids_bgra_uint8_image = segmentation_component.read_pixels()["arrays"]["data"]
-                    raw_id_image = spear.rendering.get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8_image)
+                    raw_id_image = spear.image.get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8_image)
                     num_segments[view_index] = np.count_nonzero(np.unique(raw_id_image))
 
             # The rate at which we rendered the candidate views (one rendered frame each), for basic throughput info.
@@ -163,8 +163,8 @@ def process_scene():
     # Unreal convention that the camera's +X is its look direction, +Y is its right direction, and +Z is its up
     # direction (so the matrix's columns are those three directions in world space). The camera position at each
     # location is recoverable from the path itself at the corresponding normalized time.
-    free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_keyframes"))
-    free_space_camera_keyframes_file = os.path.realpath(os.path.join(free_space_dir, "free_space_camera_keyframes.h5"))
+    free_space_dir = spear.path.realpath(args.pipeline_dir, "free_space_camera_keyframes")
+    free_space_camera_keyframes_file = spear.path.realpath(free_space_dir, "free_space_camera_keyframes.h5")
     spear.log("Writing free-space camera keyframes file: ", free_space_camera_keyframes_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_camera_keyframes_file, "w") as f:

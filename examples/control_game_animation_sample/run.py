@@ -31,7 +31,7 @@ def save_images(images_dir, frame_index):
     assert not args.skip_save_images
     for component_desc in component_descs:
         data = component_desc["data"]
-        image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
+        image_file = spear.path.realpath(images_dir, component_desc["name"], f"{frame_index:04d}.png")
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
         cv2.imwrite(image_file, image)
@@ -41,16 +41,16 @@ if __name__ == "__main__":
 
     # create output dirs
     if not args.skip_read_pixels and not args.skip_save_images:
-        images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+        images_dir = spear.path.realpath(os.path.dirname(__file__), "images")
         if os.path.exists(images_dir):
             spear.log("Directory exists, removing: ", images_dir)
             shutil.rmtree(images_dir, ignore_errors=True)
         os.makedirs(images_dir, exist_ok=True)
         for component_desc in component_descs:
-            os.makedirs(os.path.realpath(os.path.join(images_dir, component_desc["name"])), exist_ok=True)
+            os.makedirs(spear.path.realpath(images_dir, component_desc["name"]), exist_ok=True)
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()

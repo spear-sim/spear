@@ -47,7 +47,7 @@ def process_scene():
     # Load the camera paths computed by generate_free_space_camera_paths.py. Each path has a position and a
     # camera-to-world rotation matrix at each of a dense set of samples (the rotation matrix's columns are the
     # camera's +X look, +Y right, and +Z up directions in world space).
-    free_space_camera_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_paths", "free_space_camera_paths.h5"))
+    free_space_camera_paths_file = spear.path.realpath(args.pipeline_dir, "free_space_camera_paths", "free_space_camera_paths.h5")
     spear.log("Reading free-space camera paths file: ", free_space_camera_paths_file)
     assert os.path.exists(free_space_camera_paths_file)
     with h5py.File(free_space_camera_paths_file, "r") as f:

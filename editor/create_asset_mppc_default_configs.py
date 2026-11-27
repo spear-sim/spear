@@ -3,7 +3,6 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import os
 import posixpath
 import spear
 import unreal
@@ -223,7 +222,7 @@ if __name__ == "__main__":
 
     # Output
     setting = config.find_or_add_setting_by_class(class_=unreal.MoviePipelineOutputSetting, include_disabled_settings=False, exact_match=True)
-    setting.set_editor_property(name="output_directory", value=unreal.DirectoryPath(path=os.path.join("{project_dir}", "Saved", "MovieRenders", config_desc["name"])))
+    setting.set_editor_property(name="output_directory", value=unreal.DirectoryPath(path=posixpath.join("{project_dir}", "Saved", "MovieRenders", config_desc["name"])))
     if use_custom_playback_range:
         setting.set_editor_property(name="use_custom_playback_range", value=True)
         setting.set_editor_property(name="custom_start_frame", value=custom_start_frame)
@@ -374,7 +373,7 @@ if __name__ == "__main__":
 
     # Output
     setting = config.find_or_add_setting_by_class(class_=unreal.MoviePipelineOutputSetting, include_disabled_settings=False, exact_match=True)
-    setting.set_editor_property(name="output_directory", value=unreal.DirectoryPath(path=os.path.join("{project_dir}", "Saved", "MovieRenders", config_desc["name"])))
+    setting.set_editor_property(name="output_directory", value=unreal.DirectoryPath(path=posixpath.join("{project_dir}", "Saved", "MovieRenders", config_desc["name"])))
     if use_custom_playback_range:
         setting.set_editor_property(name="use_custom_playback_range", value=True)
         setting.set_editor_property(name="custom_start_frame", value=custom_start_frame)
@@ -441,7 +440,7 @@ if __name__ == "__main__":
 
     # Output
     setting = config.find_or_add_setting_by_class(class_=unreal.MoviePipelineOutputSetting, include_disabled_settings=False, exact_match=True)
-    setting.set_editor_property(name="output_directory", value=unreal.DirectoryPath(path=os.path.join("{project_dir}", "Saved", "MovieRenders", config_desc["name"])))
+    setting.set_editor_property(name="output_directory", value=unreal.DirectoryPath(path=posixpath.join("{project_dir}", "Saved", "MovieRenders", config_desc["name"])))
     if use_custom_playback_range:
         setting.set_editor_property(name="use_custom_playback_range", value=True)
         setting.set_editor_property(name="custom_start_frame", value=custom_start_frame)

@@ -20,18 +20,18 @@ mesh_descs = \
 [
     {
         "url": "http://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz",
-        "ply_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "ply", "bunny", "reconstruction", "bun_zipper.ply")),
-        "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf"))
+        "ply_file": spear.path.realpath(os.path.dirname(__file__), "ply", "bunny", "reconstruction", "bun_zipper.ply"),
+        "gltf_file": spear.path.realpath(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf")
     },
     {
         "url": "http://graphics.stanford.edu/pub/3Dscanrep/happy/happy_recon.tar.gz",
-        "ply_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "ply", "happy_recon", "happy_vrip.ply")),
-        "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "happy", "mesh.gltf"))
+        "ply_file": spear.path.realpath(os.path.dirname(__file__), "ply", "happy_recon", "happy_vrip.ply"),
+        "gltf_file": spear.path.realpath(os.path.dirname(__file__), "gltf", "happy", "mesh.gltf")
     },
     {
         "url": "http://graphics.stanford.edu/pub/3Dscanrep/dragon/dragon_recon.tar.gz",
-        "ply_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "ply", "dragon_recon", "dragon_vrip.ply")),
-        "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf"))
+        "ply_file": spear.path.realpath(os.path.dirname(__file__), "ply", "dragon_recon", "dragon_vrip.ply"),
+        "gltf_file": spear.path.realpath(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf")
     }
 ]
 
@@ -39,8 +39,8 @@ mesh_descs = \
 if __name__ == "__main__":
 
     # create output dirs
-    download_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "download"))
-    ply_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "ply"))
+    download_dir = spear.path.realpath(os.path.dirname(__file__), "download")
+    ply_dir = spear.path.realpath(os.path.dirname(__file__), "ply")
 
     if os.path.exists(download_dir):
         spear.log("Directory exists, removing: ", download_dir)
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         mesh_archive_file = os.path.split(mesh_desc["url"])[1]
         gltf_dir = os.path.split(mesh_desc["gltf_file"])[0]
 
-        download_file = os.path.realpath(os.path.join(download_dir, mesh_archive_file))
+        download_file = spear.path.realpath(download_dir, mesh_archive_file)
 
         spear.log(f"Downloading {mesh_desc['url']} to {download_file}")
         wget.download(mesh_desc["url"], out=download_file)

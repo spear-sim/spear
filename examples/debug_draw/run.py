@@ -41,7 +41,7 @@ component_descs = \
 if __name__ == "__main__":
 
     # create output dir
-    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+    images_dir = spear.path.realpath(os.path.dirname(__file__), "images")
     if os.path.exists(images_dir):
         spear.log("Directory exists, removing: ", images_dir)
         shutil.rmtree(images_dir, ignore_errors=True)
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     # save images
     for component_desc in component_descs:
         data = component_desc["data"]
-        image_file = os.path.realpath(os.path.join(images_dir, f"{component_desc['name']}.png"))
+        image_file = spear.path.realpath(images_dir, f"{component_desc['name']}.png")
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
         cv2.imwrite(image_file, image)
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     proxy_bounding_box_ids = np.array([ bounding_box_ptrs.index(proxy_id_desc["Actor"].ptr) for proxy_id_desc in proxy_id_descs ])
     bounding_box_colors_uint8 = np.round(bounding_box_colors*255.0).astype(np.uint8)
     segmentation_image = bounding_box_colors_uint8[proxy_bounding_box_ids[proxy_id_image]]
-    image_file = os.path.realpath(os.path.join(images_dir, "segmentation.png"))
+    image_file = spear.path.realpath(images_dir, "segmentation.png")
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, segmentation_image[:,:,[2,1,0]]) # RGB -> BGR
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     K = min(750.0, float(np.max(planar_depth_image)))
     planar_depth_image = np.clip(planar_depth_image, 0.0, K)/K
 
-    image_file = os.path.realpath(os.path.join(images_dir, "planar_depth.png"))
+    image_file = spear.path.realpath(images_dir, "planar_depth.png")
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, cv2.applyColorMap((planar_depth_image*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS))
 

@@ -36,7 +36,7 @@ def terminate_camera(game, bp_camera_sensor, component):
 
 if __name__ == "__main__":
 
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()

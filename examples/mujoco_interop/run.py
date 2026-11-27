@@ -46,7 +46,7 @@ def save_images(images_dir, frame_index):
     assert args.save_images
     for component_desc in component_descs:
         data = component_desc["data"]
-        image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
+        image_file = spear.path.realpath(images_dir, component_desc["name"], f"{frame_index:04d}.png")
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
         cv2.imwrite(image_file, image)
@@ -89,18 +89,18 @@ def to_mujoco_matrix_from_spear_rotator(spear_rotator):
 if __name__ == "__main__":
 
     # create output dirs
-    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+    images_dir = spear.path.realpath(os.path.dirname(__file__), "images")
     if args.save_images:
         if os.path.exists(images_dir):
             spear.log("Directory exists, removing: ", images_dir)
             shutil.rmtree(images_dir, ignore_errors=True)
         os.makedirs(images_dir, exist_ok=True)
         for component_desc in component_descs:
-            os.makedirs(os.path.realpath(os.path.join(images_dir, component_desc["name"])), exist_ok=True)
-        os.makedirs(os.path.realpath(os.path.join(images_dir, "mujoco")), exist_ok=True)
+            os.makedirs(spear.path.realpath(images_dir, component_desc["name"]), exist_ok=True)
+        os.makedirs(spear.path.realpath(images_dir, "mujoco"), exist_ok=True)
 
     # create SPEAR instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     sp_instance = spear.Instance(config=config)
     sp_game = sp_instance.get_game()
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     # initialize MuJoCo
-    mj_model = mujoco.MjModel.from_xml_path(os.path.realpath(args.mjcf_file))
+    mj_model = mujoco.MjModel.from_xml_path(spear.path.realpath(args.mjcf_file))
     mj_data = mujoco.MjData(mj_model)
     mujoco.mj_forward(mj_model, mj_data)
 
@@ -261,7 +261,7 @@ if __name__ == "__main__":
             # save MuJoCo images
             mj_renderer.update_scene(data=mj_data, camera=mj_viewer.cam)
             mj_render = mj_renderer.render()
-            image_file = os.path.realpath(os.path.join(images_dir, "mujoco", f"{frame_index:04d}.png"))
+            image_file = spear.path.realpath(images_dir, "mujoco", f"{frame_index:04d}.png")
             image = mj_render[:,:,[2,1,0]] # MuJoCo renders RGB -> BGR for cv2
             spear.log("Saving image: ", image_file)
             cv2.imwrite(image_file, image)

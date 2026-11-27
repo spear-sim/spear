@@ -11,7 +11,7 @@ import spear
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
-parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--unreal-project-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     spear.tools.validate_build_environment()
 
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    unreal_project_dir = spear.path.realpath(args.unreal_project_dir)
+    uprojects = glob.glob(spear.path.realpath(unreal_project_dir, "*.uproject"))
     assert len(uprojects) == 1
     uproject = uprojects[0]
 

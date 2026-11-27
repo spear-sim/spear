@@ -188,7 +188,7 @@ editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
-editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "data", "editor_properties.csv"))
+editor_properties_csv_file = spear.path.realpath(os.path.dirname(__file__), "..", "data", "editor_properties.csv")
 df_editor_properties = pd.read_csv(editor_properties_csv_file, comment="#")
 
 #
@@ -759,18 +759,18 @@ def _to_spear_transform(transform):
 
 def imshow(name, image, temp_dir=None, temp_file=None):
     if temp_dir is None:
-        temp_dir = os.path.join(unreal.Paths.project_saved_dir(), "SPEAR")
+        temp_dir = spear.path.realpath(unreal.Paths.project_saved_dir(), "SPEAR")
     if temp_file is None:
         temp_file = f"{name}.png"
     os.makedirs(temp_dir, exist_ok=True)
 
-    path = os.path.abspath(os.path.join(temp_dir, temp_file))
+    path = spear.path.realpath(temp_dir, temp_file)
     spear.log("Saving image: ", path)
     cv2.imwrite(path, image)
 
-    python_bin = unreal.get_interpreter_executable_path()
+    python_bin = spear.path.realpath(unreal.get_interpreter_executable_path())
 
-    run_imshow = os.path.abspath(os.path.join(os.path.dirname(spear.__file__), "tools", "run_imshow.py"))
+    run_imshow = spear.path.realpath(os.path.dirname(spear.__file__), "tools", "run_imshow.py")
     cmd = [python_bin, run_imshow, "--path", path, "--name", name]
     spear.tools.run_cmd(cmd=cmd)
 
@@ -785,13 +785,19 @@ def get_filesystem_path_from_content_path(content_path):
     assert len(content_path_tokens) >= 2
     content_root = content_path_tokens[1]
 
+    # The unreal.Paths functions can return paths that are relative to the editor's working directory (e.g.,
+    # "../../../SpearSim/Content/"), so we convert filesystem_base_dir to an absolute path. But we use
+    # os.path.join(...) instead of spear.path.realpath(...) for paths inside filesystem_base_dir, because content
+    # directories can be symlinks (e.g., see tools/update_symlink_for_external_content.py), and we want the
+    # paths we return to refer to the symlinked paths inside filesystem_base_dir.
     if content_root == "Game":
-        filesystem_base_dir = unreal.Paths.project_content_dir()
+        filesystem_base_dir = spear.path.realpath(unreal.Paths.project_content_dir())
     elif content_root == "Engine":
-        filesystem_base_dir = unreal.Paths.engine_content_dir()
+        filesystem_base_dir = spear.path.realpath(unreal.Paths.engine_content_dir())
     else:
-        filesystem_base_dir = unreal.PluginBlueprintLibrary.get_plugin_content_dir(plugin_name=content_root)
-        assert filesystem_base_dir is not None
+        plugin_content_dir = unreal.PluginBlueprintLibrary.get_plugin_content_dir(plugin_name=content_root)
+        assert plugin_content_dir is not None
+        filesystem_base_dir = spear.path.realpath(plugin_content_dir)
 
     if len(content_path_tokens) == 2:
         return filesystem_base_dir

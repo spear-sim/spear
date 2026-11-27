@@ -161,10 +161,9 @@ import sys
 #
 
 #
-# Return a default set of maps to cook. This set is needed in several places, e.g., build_executable.py,
-# build_paks.py, and run_uat.py. We would like to specify directories to always cook in a similar way, but
-# specifying multiple -cookdir arguments on the command-line doesn't work reliably. So we specify cook
-# directories in DefaultGame.ini.
+# Return a default set of maps to cook. This set is needed in several places, i.e., build_executable.py and
+# run_uat.py. We would like to specify directories to always cook in a similar way, but specifying multiple -cookdir
+# arguments on the command-line doesn't work reliably. So we specify cook directories in DefaultGame.ini.
 #
 
 def get_default_maps_to_cook():
@@ -213,6 +212,8 @@ def validate_build_environment():
         # "~/.config/Unreal Engine/" without requiring admin privileges. This check might seem esoteric, but
         # we have seen cases where "~/.config/" is owned by root in some corporate environments, so we choose
         # to check it here as a courtesy to new users. We don't know if we need a similar check on Windows.
+        # We don't use spear.path.realpath(...) here, because we want to check the ownership of "~/.config/"
+        # itself, not the directory it points to if it is a symlink.
         config_dir = os.path.expanduser(os.path.join("~", ".config"))
         if os.path.exists(config_dir):
             import pwd # not available on Windows
@@ -233,7 +234,7 @@ def run_uat(unreal_engine_dir, args):
         run_uat_script_name = "RunUAT.sh"
     else:
         assert False
-    run_uat_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", run_uat_script_name))
+    run_uat_script = spear.path.realpath(unreal_engine_dir, "Engine", "Build", "BatchFiles", run_uat_script_name)
     assert os.path.exists(run_uat_script)
 
     run_cmd(cmd=[run_uat_script] + args) # see INTERNAL CONVENTIONS below
@@ -247,7 +248,7 @@ def run_build(unreal_engine_dir, args):
         build_script_suffix = os.path.join("Linux", "Build.sh")
     else:
         assert False
-    build_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_suffix))
+    build_script = spear.path.realpath(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_suffix)
     assert os.path.exists(build_script)
 
     # UnrealBuildTool returns exit code 2 when every target is already up-to-date, which isn't an error, so we
@@ -262,13 +263,13 @@ def run_build(unreal_engine_dir, args):
 
 def run_generate_project_files(unreal_engine_dir, args):
     if sys.platform == "win32":
-        generate_project_files_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.bat"))
+        generate_project_files_script = spear.path.realpath(unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.bat")
         generate_project_files_platform_args = ["-projectfiles"]
     elif sys.platform == "darwin":
-        generate_project_files_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", "Mac", "GenerateProjectFiles.sh"))
+        generate_project_files_script = spear.path.realpath(unreal_engine_dir, "Engine", "Build", "BatchFiles", "Mac", "GenerateProjectFiles.sh")
         generate_project_files_platform_args = []
     elif sys.platform == "linux":
-        generate_project_files_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", "Linux", "GenerateProjectFiles.sh"))
+        generate_project_files_script = spear.path.realpath(unreal_engine_dir, "Engine", "Build", "BatchFiles", "Linux", "GenerateProjectFiles.sh")
         generate_project_files_platform_args = []
     else:
         assert False
@@ -480,51 +481,3 @@ def get_unreal_python_script_args_string(args):
         arg_strings.append(arg_string)
     return " ".join(arg_strings)
 
-
-#
-# Helper functions for paths that handle symlinks robustly. We can't simply call os.path.exists(...) or
-# os.path.lexists(...), because a symlink created on Linux, on a drive that is also visible to Windows, might
-# not be recognized as a symlink by Windows, and might not even be queryable, e.g., if the file server fails
-# to resolve it. In this case, the only way to observe the symlink is that it appears in the listing of its
-# parent directory.
-#
-
-def path_exists(path):
-    if os.path.exists(path) or os.path.islink(path):
-        return True
-
-    head, tail = os.path.split(path)
-    if os.path.exists(head) or os.path.islink(head):
-        if tail == "":
-            return os.path.exists(head) or os.path.islink(head)
-        else:
-            return tail in os.listdir(head)
-    else:
-        return False
-
-def remove_path(path):
-    if not path_exists(path=path):
-        return
-
-    if os.path.islink(path):
-        os.unlink(path)
-    elif os.path.isfile(path):
-        os.remove(path)
-    elif os.path.isdir(path):
-        shutil.rmtree(path, ignore_errors=True)
-    else:
-        # If we get here, then path_exists(...) found path in the listing of its parent directory, but Python
-        # can't classify it, e.g., a symlink created on Linux and viewed on Windows. In this case, try to use
-        # the command-line (we don't attempt to use subprocess.run() because it returns an error when
-        # attempting to remove broken symlinks).
-        if sys.platform == "win32":
-            rm_cmd = "del"
-        elif sys.platform in ["darwin", "linux"]:
-            rm_cmd = "rm"
-        else:
-            assert False
-        cmd = f'{rm_cmd} "{path}"'
-        cmd_result = os.system(cmd)
-        assert cmd_result == 0
-
-    assert not path_exists(path=path)

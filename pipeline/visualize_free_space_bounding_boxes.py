@@ -60,9 +60,9 @@ def process_scene():
     # and generate_free_space_bounding_boxes.py. We draw the points and visibility graph here too, but even more
     # faintly than in visualize_free_space_visibility_graph.py, to give context for the bounding boxes without
     # cluttering them.
-    free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
-    visibility_graph_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5"))
-    free_space_bounding_boxes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5"))
+    free_space_points_file = spear.path.realpath(args.pipeline_dir, "free_space_points", "free_space_points.h5")
+    visibility_graph_file = spear.path.realpath(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5")
+    free_space_bounding_boxes_file = spear.path.realpath(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5")
     spear.log("Reading free-space points file: ", free_space_points_file)
     assert os.path.exists(free_space_points_file)
     spear.log("Reading visibility graph file: ", visibility_graph_file)

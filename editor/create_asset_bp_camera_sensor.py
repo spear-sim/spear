@@ -602,12 +602,12 @@ if __name__ == "__main__":
         # PostProcessingSettings properties (optional)
 
         if "dynamic_global_illumination_method" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings") # returns a reference, so edits persist on the parent
             post_process_settings.set_editor_property(name="override_dynamic_global_illumination_method", value=True)
             post_process_settings.set_editor_property(name="dynamic_global_illumination_method", value=component_desc["dynamic_global_illumination_method"])
 
         if "reflection_method" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings") # returns a reference, so edits persist on the parent
             post_process_settings.set_editor_property(name="override_reflection_method", value=True)
             post_process_settings.set_editor_property(name="reflection_method", value=component_desc["reflection_method"])
 

@@ -14,7 +14,7 @@ import unreal
 mesh_descs = \
 [
     {
-        "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf")),
+        "gltf_file": spear.path.realpath(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf"),
         "static_mesh_name": "SM_Bunny",
         "static_mesh_dir": "/Game/Stanford/Meshes",
         "material_name": "M_Metal_Rust",
@@ -23,7 +23,7 @@ mesh_descs = \
         "blueprint_dir": "/Game/Stanford/Blueprints"
     },
     {
-        "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "happy", "mesh.gltf")),
+        "gltf_file": spear.path.realpath(os.path.dirname(__file__), "gltf", "happy", "mesh.gltf"),
         "static_mesh_name": "SM_Happy",
         "static_mesh_dir": "/Game/Stanford/Meshes",
         "material_name": "M_Ground_Grass",
@@ -32,7 +32,7 @@ mesh_descs = \
         "blueprint_dir": "/Game/Stanford/Blueprints",
     },
     {
-        "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf")),
+        "gltf_file": spear.path.realpath(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf"),
         "static_mesh_name": "SM_Dragon",
         "static_mesh_dir": "/Game/Stanford/Meshes",
         "material_name": "M_Basic_Floor",
@@ -42,7 +42,9 @@ mesh_descs = \
     }
 ]
 
-content_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "cpp", "unreal_projects", "SpearSim", "Content"))
+content_dir = spear.path.realpath(os.path.dirname(__file__), "..", "..", "cpp", "unreal_projects", "SpearSim", "Content")
+# We do not want to use spear.path.realpath(...) here, because Stanford is typically a symlink to an external
+# directory (see README.md), and we want this path to refer to the symlinked path inside the Unreal project.
 cook_dirs = [os.path.join(content_dir, "Stanford")]
 include_assets = [os.path.join("SpearSim", "Content", "Stanford", "**", "*.*")]
 
@@ -53,7 +55,7 @@ editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem
 if __name__ == "__main__":
 
     # create output dir
-    csv_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "csv"))
+    csv_dir = spear.path.realpath(os.path.dirname(__file__), "csv")
     if os.path.exists(csv_dir):
         spear.log("Directory exists, removing: ", csv_dir)
         shutil.rmtree(csv_dir, ignore_errors=True)
@@ -138,13 +140,13 @@ if __name__ == "__main__":
         editor_asset_subsystem.save_loaded_asset(asset_to_save=blueprint_asset)
 
     # create cook dirs file
-    cook_dirs_file = os.path.realpath(os.path.join(csv_dir, "cook_dirs.csv"))
+    cook_dirs_file = spear.path.realpath(csv_dir, "cook_dirs.csv")
     spear.log("Writing cook dirs file: ", cook_dirs_file)
     df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
     df.to_csv(cook_dirs_file, index=False)
 
     # create include assets file
-    include_assets_file = os.path.realpath(os.path.join(csv_dir, "include_assets.csv"))
+    include_assets_file = spear.path.realpath(csv_dir, "include_assets.csv")
     spear.log("Writing include assets file: ", include_assets_file)
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
     df.to_csv(include_assets_file, index=False)

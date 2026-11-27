@@ -13,7 +13,7 @@ import spear
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--build-target")
-parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--unreal-project-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
 parser.add_argument("--clean-archive-dir", action="store_true")
 parser.add_argument("--skip-cook-default-maps", action="store_true")
 parser.add_argument("--cook-dirs", nargs="*")
@@ -32,14 +32,14 @@ if __name__ == "__main__":
 
     target_platform = spear.tools.get_target_platform()
 
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    spear_sim_unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
+    unreal_project_dir = spear.path.realpath(args.unreal_project_dir)
+    spear_sim_unreal_project_dir = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")
 
-    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    uprojects = glob.glob(spear.path.realpath(unreal_project_dir, "*.uproject"))
     assert len(uprojects) == 1
     uproject = uprojects[0]
     uproject_name = os.path.splitext(os.path.split(uproject)[1])[0]
-    archive_dir = os.path.realpath(os.path.join(unreal_project_dir, f"Standalone-{args.build_config}"))
+    archive_dir = spear.path.realpath(unreal_project_dir, f"Standalone-{args.build_config}")
 
     if args.build_target is None:
         build_target = uproject_name

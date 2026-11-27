@@ -22,8 +22,8 @@ assert os.path.exists(args.pipeline_dir)
 
 def process_scene():
 
-    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "kinematic_trees"))
-    kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
+    kinematic_trees_dir = spear.path.realpath(args.pipeline_dir, "kinematic_trees")
+    kinematic_trees_actors_json_file = spear.path.realpath(kinematic_trees_dir, "scene.json")
     spear.log("Reading JSON file: ", kinematic_trees_actors_json_file)
     assert os.path.exists(kinematic_trees_actors_json_file)
     with open(kinematic_trees_actors_json_file, "r") as f:
@@ -32,8 +32,8 @@ def process_scene():
     actors = actors_json
     actors = { actor_name: generate_collision_geometry(actor_name=actor_name, kinematic_tree=actor_kinematic_tree) for actor_name, actor_kinematic_tree in actors.items() }
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
-    collision_geometry_actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
+    collision_geometry_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry")
+    collision_geometry_actors_json_file = spear.path.realpath(collision_geometry_dir, "scene.json")
     spear.log("Writing JSON file: ", collision_geometry_actors_json_file)
     os.makedirs(collision_geometry_dir, exist_ok=True)
     with open(collision_geometry_actors_json_file, "w") as f:
@@ -62,7 +62,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
     else:
         static_mesh_components_grouped_by_merge_id = {}
 
-    raw_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry", "raw", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"]))
+    raw_obj_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry", "raw", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"])
     os.makedirs(raw_obj_dir, exist_ok=True)
 
     # TODO: Break this group-by-merge-id step into a different pipeline stage, so we can generate the
@@ -93,7 +93,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
 
             obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
 
-            numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
+            numerical_parity_obj_path = spear.path.realpath(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix)
             spear.log(f"{log_prefix_str}Reading OBJ file: {numerical_parity_obj_path}")
 
             mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
@@ -107,7 +107,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         raw_merge_id_mesh = raw_merge_id_mesh_scene.dump(concatenate=True)
 
         # Save merged mesh.
-        raw_merge_id_obj_path = os.path.realpath(os.path.join(raw_obj_dir, f"merge_id_{merge_id:04}.obj"))
+        raw_merge_id_obj_path = spear.path.realpath(raw_obj_dir, f"merge_id_{merge_id:04}.obj")
         spear.log(f"{log_prefix_str}Writing OBJ file: {raw_merge_id_obj_path}")
         raw_merge_id_mesh.export(raw_merge_id_obj_path, "obj")
 
@@ -116,10 +116,10 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         coacd_parts_data = coacd.run_coacd(coacd_mesh)
 
         # Save COACD result as individual parts, and as a combined mesh for debugging.
-        coacd_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry", "coacd", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"]))
+        coacd_obj_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry", "coacd", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"])
         os.makedirs(coacd_obj_dir, exist_ok=True)
 
-        coacd_part_obj_dir = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}"))
+        coacd_part_obj_dir = spear.path.realpath(coacd_obj_dir, f"merge_id_{merge_id:04}")
         os.makedirs(coacd_part_obj_dir, exist_ok=True)
 
         coacd_parts_scene = trimesh.Scene()
@@ -130,13 +130,13 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             coacd_part_mesh = trimesh.Trimesh(vertices=coacd_part_vertices, faces=coacd_part_faces)
             coacd_parts_scene.add_geometry(coacd_part_mesh)
 
-            coacd_part_obj_path = os.path.realpath(os.path.join(coacd_part_obj_dir, f"part_id_{coacd_part_id:04}.obj"))
+            coacd_part_obj_path = spear.path.realpath(coacd_part_obj_dir, f"part_id_{coacd_part_id:04}.obj")
             spear.log(f"{log_prefix_str}Writing OBJ file: {coacd_part_obj_path}")
             coacd_part_mesh.export(coacd_part_obj_path, "obj")
 
             kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id]["coacd"]["part_ids"].append(coacd_part_id)
 
-        coacd_obj_path = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}.obj"))
+        coacd_obj_path = spear.path.realpath(coacd_obj_dir, f"merge_id_{merge_id:04}.obj")
         spear.log(f"{log_prefix_str}Writing OBJ file: {coacd_obj_path}")
         coacd_parts_scene.export(coacd_obj_path, "obj")
 

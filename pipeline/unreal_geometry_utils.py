@@ -27,8 +27,8 @@ static_mesh_component_classes = ["StaticMeshComponent"]
 
 def get_actors(pipeline_dir, ignore_actors=None):
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(pipeline_dir, "unreal_metadata"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
+    unreal_metadata_dir = spear.path.realpath(pipeline_dir, "unreal_metadata")
+    actors_json_file = spear.path.realpath(unreal_metadata_dir, "scene.json")
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
@@ -116,7 +116,9 @@ def get_bounding_box(component_desc):
     # The box is axis-aligned in the component's local frame, so its world half-extent is the local half-extent
     # scaled by the component's scale, its world orientation is the component's rotation, and its world center is
     # the local center mapped out to world space. The rotation is rigid, so distances are preserved in world units.
-    half_extent = scale*(box_max - box_min)/2.0
+    # We use the absolute value of the scale for the half-extent, because the scale is negative along mirrored axes,
+    # but the half-extent must be non-negative. We use the signed scale for the center, because mirroring moves it.
+    half_extent = np.abs(scale)*(box_max - box_min)/2.0
     center_world = rotation_world_from_component*scale*(box_min + box_max)/2.0 + translation_world
     translation_component_from_world = -rotation_component_from_world*center_world
 
@@ -267,7 +269,7 @@ def draw_component(pipeline_dir, transform_world_from_parent_component, componen
                 spear.log(f"{log_prefix_str}StaticMesh asset path: {static_mesh_asset_path}")
 
                 obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-                numerical_parity_obj_path = os.path.realpath(os.path.join(pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                numerical_parity_obj_path = spear.path.realpath(pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix)
                 spear.log(f"{log_prefix_str}Reading OBJ file: {numerical_parity_obj_path}")
 
                 mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)

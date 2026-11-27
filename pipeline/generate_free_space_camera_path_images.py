@@ -53,7 +53,7 @@ def process_scene():
 
     # Read the camera paths computed by generate_free_space_camera_paths.py: a camera position and a camera-to-world
     # rotation matrix at each of a dense set of samples along each path.
-    free_space_camera_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_paths", "free_space_camera_paths.h5"))
+    free_space_camera_paths_file = spear.path.realpath(args.pipeline_dir, "free_space_camera_paths", "free_space_camera_paths.h5")
     spear.log("Reading free-space camera paths file: ", free_space_camera_paths_file)
     assert os.path.exists(free_space_camera_paths_file)
     with h5py.File(free_space_camera_paths_file, "r") as f:
@@ -62,7 +62,7 @@ def process_scene():
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
     # offscreen and which scene to open (the scene must be the one this pipeline directory was generated from).
-    config = spear.get_config(user_config_files=[ os.path.realpath(config_file) for config_file in args.config_files ])
+    config = spear.get_config(user_config_files=[ spear.path.realpath(config_file) for config_file in args.config_files ])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
@@ -87,14 +87,14 @@ def process_scene():
     game.async_loading_service.wait_for_engine_idle()
     instance.step(num_frames=2)
 
-    images_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_path_images", images_dir_prefix))
+    images_dir = spear.path.realpath(args.pipeline_dir, "free_space_camera_path_images", images_dir_prefix)
     os.makedirs(images_dir, exist_ok=True)
 
     # Render an image at each sample of each camera path, saving each path's images to its own subdirectory.
     num_frames = camera_path_positions.shape[1]
     for path_index in range(camera_path_positions.shape[0]):
 
-        path_images_dir = os.path.realpath(os.path.join(images_dir, f"{path_index:04}"))
+        path_images_dir = spear.path.realpath(images_dir, f"{path_index:04}")
         os.makedirs(path_images_dir, exist_ok=True)
 
         spear.log(f"Rendering {num_warmup_frames} warm-up frames for path {path_index}...")
@@ -121,7 +121,7 @@ def process_scene():
             with instance.end_frame():
                 # The final-tone-curve component renders a BGRA uint8 image, which OpenCV writes directly as a PNG.
                 image = capture_component.read_pixels()["arrays"]["data"]
-            image_file = os.path.realpath(os.path.join(path_images_dir, f"{frame_index:04}.png"))
+            image_file = spear.path.realpath(path_images_dir, f"{frame_index:04}.png")
             spear.log("Saving image: ", image_file)
             cv2.imwrite(image_file, image)
 

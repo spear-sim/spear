@@ -20,7 +20,7 @@ parser.add_argument("--code-sign-tool-dir", required=True)
 parser.add_argument("--ssl-username", required=True)
 parser.add_argument("--ssl-password", required=True)
 parser.add_argument("--ssl-totp-secret", required=True)
-parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-dir", default=spear.path.realpath(os.path.dirname(__file__), "BUILD"))
 args = parser.parse_args()
 
 assert os.path.exists(args.code_sign_tool_dir)
@@ -32,8 +32,8 @@ if __name__ == "__main__":
 
     spear.tools.validate_build_environment()
 
-    input_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}-Unsigned"))
-    output_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}"))
+    input_dir = spear.path.realpath(args.build_dir, f"SpearSim-Win64-{args.build_config}-Unsigned")
+    output_dir = spear.path.realpath(args.build_dir, f"SpearSim-Win64-{args.build_config}")
 
     # TODO: Debug and Test builds only work when the engine is compiled from source, so I don't know the default name of the executable for these build configs
     if args.build_config == "DebugGame":
@@ -83,8 +83,8 @@ if __name__ == "__main__":
 
         spear.log("Signing file: ", sign_file)
 
-        input_file = os.path.realpath(os.path.join(input_dir, sign_file))
-        output_file = os.path.realpath(os.path.join(output_dir, sign_file))
+        input_file = spear.path.realpath(input_dir, sign_file)
+        output_file = spear.path.realpath(output_dir, sign_file)
         output_dir_internal = os.path.dirname(output_file)
         assert os.path.exists(input_file)
         assert os.path.exists(output_dir_internal)

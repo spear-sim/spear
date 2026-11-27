@@ -51,8 +51,8 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
-    actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
+    collision_geometry_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry")
+    actors_json_file = spear.path.realpath(collision_geometry_dir, "scene.json")
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
@@ -113,18 +113,18 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
         # TODO: retrieve desired decomposition strategy from the JSON data
         convex_decomposition_strategy = "coacd"
 
-        merge_id_obj_dir = os.path.realpath(os.path.join(
+        merge_id_obj_dir = spear.path.realpath(
             args.pipeline_dir,
             "collision_geometry",
             convex_decomposition_strategy,
             actor_name.replace("/", ".").replace(":", "."),
             kinematic_tree_node["name"],
-            f"merge_id_{int(merge_id):04}")) # JSON stores keys as strings, so we need to convert merge_id to an int
+            f"merge_id_{int(merge_id):04}") # JSON stores keys as strings, so we need to convert merge_id to an int
 
         part_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"]
         for part_id in part_ids:
 
-            part_id_obj_path = os.path.realpath(os.path.join(merge_id_obj_dir, f"part_id_{part_id:04}.obj"))
+            part_id_obj_path = spear.path.realpath(merge_id_obj_dir, f"part_id_{part_id:04}.obj")
             spear.log(f"{log_prefix_str}Reading OBJ file: {part_id_obj_path}")
 
             mesh = trimesh.load_mesh(part_id_obj_path, process=False, validate=False)

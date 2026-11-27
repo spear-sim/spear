@@ -32,7 +32,7 @@ def process_scene():
     assert len(bounding_boxes) > 0
 
     # Read the free-space points sampled by generate_free_space_points.py.
-    free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
+    free_space_points_file = spear.path.realpath(args.pipeline_dir, "free_space_points", "free_space_points.h5")
     spear.log("Reading free-space points file: ", free_space_points_file)
     assert os.path.exists(free_space_points_file)
     with h5py.File(free_space_points_file, "r") as f:
@@ -43,8 +43,8 @@ def process_scene():
 
     # Save the visibility graph as the index pairs of mutually visible points. The free-space points themselves
     # are read back from free_space_points.h5 by each downstream stage.
-    free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_visibility_graph"))
-    visibility_graph_file = os.path.realpath(os.path.join(free_space_dir, "free_space_visibility_graph.h5"))
+    free_space_dir = spear.path.realpath(args.pipeline_dir, "free_space_visibility_graph")
+    visibility_graph_file = spear.path.realpath(free_space_dir, "free_space_visibility_graph.h5")
     spear.log("Writing visibility graph file: ", visibility_graph_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(visibility_graph_file, "w") as f:

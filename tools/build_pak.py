@@ -21,8 +21,7 @@ parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--cook-dirs-file")
 parser.add_argument("--cook-maps-file")
 parser.add_argument("--exclude-assets-file")
-parser.add_argument("--skip-cook-default-maps", action="store_true")
-parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--unreal-project-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
@@ -43,24 +42,24 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
         platform          = "Windows"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe")
+        unreal_pak_bin    = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe")
     elif sys.platform == "darwin":
         platform          = "Mac"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor")
+        unreal_pak_bin    = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak")
     elif sys.platform == "linux":
         platform          = "Linux"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
+        unreal_editor_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor")
+        unreal_pak_bin    = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak")
     else:
         assert False
 
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    unreal_project_dir = spear.path.realpath(args.unreal_project_dir)
+    uprojects = glob.glob(spear.path.realpath(unreal_project_dir, "*.uproject"))
     assert len(uprojects) == 1
     uproject = uprojects[0]
-    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
+    unreal_project_cooked_dir = spear.path.realpath(unreal_project_dir, "Saved", "Cooked", platform)
     unreal_project_cooked_dir_posix = unreal_project_cooked_dir.replace(ntpath.sep, posixpath.sep)
 
     shutil.rmtree(unreal_project_cooked_dir, ignore_errors=True)
@@ -76,8 +75,6 @@ if __name__ == "__main__":
     # assemble maps to cook
 
     cook_maps = []
-    if not args.skip_cook_default_maps:
-        cook_maps.extend(spear.tools.get_default_maps_to_cook())
     if args.cook_maps_file is not None:
         cook_maps.extend(pd.read_csv(args.cook_maps_file, comment="#")["cook_maps"].tolist())
 
@@ -104,7 +101,7 @@ if __name__ == "__main__":
     spear.tools.run_unreal_cmd(cmd=cmd)
 
     # create manifest file
-    pak_file = os.path.realpath(os.path.join(args.pak_file))
+    pak_file = spear.path.realpath(args.pak_file)
     pak_dir = os.path.split(pak_file)[0]
     spear.log("Creating directory if it does not already exist: ", pak_dir)
     os.makedirs(pak_dir, exist_ok=True)
@@ -119,7 +116,7 @@ if __name__ == "__main__":
     manifest_file = f"{os.path.splitext(pak_file)[0]}.txt"
     with open(manifest_file, "w") as f:
         for include_asset in include_assets:
-            include_asset_path = os.path.realpath(os.path.join(unreal_project_cooked_dir, include_asset))
+            include_asset_path = spear.path.realpath(unreal_project_cooked_dir, include_asset)
             for asset_path in sorted(glob.glob(include_asset_path, recursive=True)):
                 asset_path_posix = asset_path.replace(ntpath.sep, posixpath.sep)
                 assert asset_path_posix.startswith(unreal_project_cooked_dir_posix)

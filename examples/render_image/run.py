@@ -27,7 +27,7 @@ else:
 if __name__ == "__main__":
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     cv2.waitKey(0)
 
     # save image (cv2 writes the native BGR, dropping alpha)
-    image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))
+    image_file = spear.path.realpath(os.path.dirname(__file__), "image.png")
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, data_bundle["arrays"]["data"][:,:,[0,1,2]])
 

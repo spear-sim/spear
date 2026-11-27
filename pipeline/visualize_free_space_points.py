@@ -32,7 +32,7 @@ def process_scene():
 
     # Load the free-space points computed by generate_free_space_points.py. The occupied oriented bounding boxes are
     # recomputed and drawn per-component from the same metadata as the meshes in draw_actors above.
-    free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
+    free_space_points_file = spear.path.realpath(args.pipeline_dir, "free_space_points", "free_space_points.h5")
     spear.log("Reading free-space points file: ", free_space_points_file)
     assert os.path.exists(free_space_points_file)
     with h5py.File(free_space_points_file, "r") as f:

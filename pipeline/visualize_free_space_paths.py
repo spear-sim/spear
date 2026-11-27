@@ -50,8 +50,8 @@ def process_scene():
 
     # Load the free-space bounding boxes (to draw the planning network for context) and the planned paths computed by
     # generate_free_space_bounding_boxes.py and generate_free_space_paths.py.
-    free_space_bounding_boxes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5"))
-    free_space_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths", "free_space_paths.h5"))
+    free_space_bounding_boxes_file = spear.path.realpath(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5")
+    free_space_paths_file = spear.path.realpath(args.pipeline_dir, "free_space_paths", "free_space_paths.h5")
     spear.log("Reading free-space bounding boxes file: ", free_space_bounding_boxes_file)
     assert os.path.exists(free_space_bounding_boxes_file)
     spear.log("Reading free-space paths file: ", free_space_paths_file)

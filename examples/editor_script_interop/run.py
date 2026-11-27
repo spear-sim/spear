@@ -13,14 +13,14 @@ import spear
 if __name__ == "__main__":
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     editor = instance.get_editor()
 
-    inner_script_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "inner_script.py"))
-    inner_script_across_frames_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "inner_script_across_frames.py"))
-    inner_script_raise_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "inner_script_raise.py"))
+    inner_script_file = spear.path.realpath(os.path.dirname(__file__), "inner_script.py")
+    inner_script_across_frames_file = spear.path.realpath(os.path.dirname(__file__), "inner_script_across_frames.py")
+    inner_script_raise_file = spear.path.realpath(os.path.dirname(__file__), "inner_script_raise.py")
 
     #
     # execute_file_across_frames (called outside begin_frame/end_frame since it manages its own frames)

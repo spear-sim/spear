@@ -13,7 +13,7 @@ import time
 if __name__ == "__main__":
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     editor = instance.get_editor()
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         pass
 
     # run take_screenshot.py and wait for it to finish
-    take_screenshot_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "take_screenshot.py"))
+    take_screenshot_file = spear.path.realpath(os.path.dirname(__file__), "take_screenshot.py")
     editor.python_service.execute_file_across_frames(file=take_screenshot_file, args_string="")
 
     with instance.begin_frame():

@@ -19,16 +19,16 @@ assert os.path.exists(args.unreal_engine_dir)
 if __name__ == "__main__":
 
     if sys.platform == "win32":
-        unreal_editor_python_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Win64", "python.exe"))
+        unreal_editor_python_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Win64", "python.exe")
     elif sys.platform == "darwin":
-        unreal_editor_python_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Mac", "bin", "python3"))
+        unreal_editor_python_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Mac", "bin", "python3")
     elif sys.platform == "linux":
-        unreal_editor_python_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Linux", "bin", "python3"))
+        unreal_editor_python_bin = spear.path.realpath(args.unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Linux", "bin", "python3")
     else:
         assert False
 
     python_package_dirs = [
-        os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python[editor]"))]
+        spear.path.realpath(os.path.dirname(__file__), "..", "python[editor]")]
 
     for python_package_dir in python_package_dirs:
         # see https://dev.epicgames.com/community/learning/tutorials/lJly/python-install-modules-with-pip-unreal-engine-5-tutorial for more details

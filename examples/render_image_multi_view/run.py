@@ -34,13 +34,13 @@ R_world_from_actor = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator
 if __name__ == "__main__":
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
     # create output dir
-    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+    images_dir = spear.path.realpath(os.path.dirname(__file__), "images")
     if os.path.exists(images_dir):
         spear.log("Directory exists, removing: ", images_dir)
         shutil.rmtree(images_dir, ignore_errors=True)
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 data = data_bundle["arrays"]["data"]
                 canvas[component_height*j : component_height*(j+1), component_width*i : component_width*(i+1)] = data
 
-        image_file = os.path.join(images_dir, f"{f:04}.png")
+        image_file = spear.path.realpath(images_dir, f"{f:04}.png")
         spear.log("Saving image: ", image_file)
         cv2.imwrite(image_file, canvas)
 
@@ -118,13 +118,13 @@ if __name__ == "__main__":
     # Combine the rendered images into a video. We call the ffmpeg binary bundled with the imageio-ffmpeg package, so
     # no system ffmpeg installation is required. The images are named by their zero-padded frame index, which ffmpeg
     # reads as a numbered sequence.
-    video_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "video.mp4")
+    video_file = spear.path.realpath(os.path.dirname(__file__), "video.mp4")
     ffmpeg_executable = imageio_ffmpeg.get_ffmpeg_exe()
     cmd = [
         ffmpeg_executable, "-y", "-loglevel", "warning",
         "-framerate", str(frame_rate),
         "-start_number", "0",
-        "-i", os.path.join(images_dir, "%04d.png"),
+        "-i", spear.path.realpath(images_dir, "%04d.png"),
         "-c:v", "libx264",
         "-crf", str(crf),
         "-pix_fmt", "yuv420p",

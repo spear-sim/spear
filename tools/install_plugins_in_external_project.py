@@ -21,8 +21,8 @@ assert os.path.exists(args.external_project_dir)
 
 if __name__ == "__main__":
 
-    external_project_dir = os.path.realpath(args.external_project_dir)
-    uprojects = glob.glob(os.path.realpath(os.path.join(external_project_dir, "*.uproject")))
+    external_project_dir = spear.path.realpath(args.external_project_dir)
+    uprojects = glob.glob(spear.path.realpath(external_project_dir, "*.uproject"))
     assert len(uprojects) == 1
     uproject = uprojects[0]
     uproject_dir = os.path.dirname(uproject)
@@ -37,17 +37,16 @@ if __name__ == "__main__":
         uproject_dict = json.load(f)
 
     save = False
-    target_plugins_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_plugins")).replace("\\\\", "/").replace("\\", "/")
+    target_plugins_dir = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_plugins").replace("\\\\", "/").replace("\\", "/")
 
     if "AdditionalPluginDirectories" in uproject_dict:
         found = False
         for additional_plugins_dir in uproject_dict["AdditionalPluginDirectories"]:
-            candidate_plugins_dir = additional_plugins_dir.replace("/", os.path.sep)
-            if os.path.isabs(candidate_plugins_dir):
-                candidate_plugins_dir = candidate_plugins_dir.replace("\\\\", "/").replace("\\", "/")
-            else:
-                candidate_plugins_dir = os.path.realpath(os.path.join(uproject_dir, candidate_plugins_dir)).replace("\\\\", "/").replace("\\", "/")
-            if candidate_plugins_dir == target_plugins_dir:
+            # We compare canonical absolute paths, so that relative paths, symlinks, and different path separators
+            # don't cause us to add a duplicate entry. If additional_plugins_dir is absolute, then
+            # spear.path.realpath(...) ignores uproject_dir.
+            candidate_plugins_dir = spear.path.realpath(uproject_dir, additional_plugins_dir)
+            if candidate_plugins_dir == spear.path.realpath(target_plugins_dir):
                 spear.log("AdditionalPluginDirectories already has a matching entry: ", additional_plugins_dir)
                 found = True
                 break
@@ -72,7 +71,7 @@ if __name__ == "__main__":
     # for content-only projects that don't have any C++ code of their own)
     #
 
-    source_dir = os.path.realpath(os.path.join(external_project_dir, "Source"))
+    source_dir = spear.path.realpath(external_project_dir, "Source")
 
     if os.path.exists(source_dir):
         spear.log("Project already has a Source directory, so we assume a Target.cs and a primary game module already exist: ", source_dir)
@@ -80,15 +79,15 @@ if __name__ == "__main__":
         spear.log("Project has no Source directory, creating a minimal one so the SPEAR plugins can be built: ", source_dir)
 
         project_name = os.path.splitext(os.path.basename(uproject))[0]
-        module_dir = os.path.realpath(os.path.join(source_dir, project_name))
+        module_dir = spear.path.realpath(source_dir, project_name)
 
-        sp_target_rules_src_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Source", "SpTargetRules.Target.cs"))
-        sp_target_rules_dst_file = os.path.realpath(os.path.join(source_dir, "SpTargetRules.Target.cs"))
-        game_target_file = os.path.realpath(os.path.join(source_dir, f"{project_name}.Target.cs"))
-        editor_target_file = os.path.realpath(os.path.join(source_dir, f"{project_name}Editor.Target.cs"))
-        module_build_file = os.path.realpath(os.path.join(module_dir, f"{project_name}.Build.cs"))
-        module_header_file = os.path.realpath(os.path.join(module_dir, f"{project_name}.h"))
-        module_source_file = os.path.realpath(os.path.join(module_dir, f"{project_name}.cpp"))
+        sp_target_rules_src_file = spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Source", "SpTargetRules.Target.cs")
+        sp_target_rules_dst_file = spear.path.realpath(source_dir, "SpTargetRules.Target.cs")
+        game_target_file = spear.path.realpath(source_dir, f"{project_name}.Target.cs")
+        editor_target_file = spear.path.realpath(source_dir, f"{project_name}Editor.Target.cs")
+        module_build_file = spear.path.realpath(module_dir, f"{project_name}.Build.cs")
+        module_header_file = spear.path.realpath(module_dir, f"{project_name}.h")
+        module_source_file = spear.path.realpath(module_dir, f"{project_name}.cpp")
 
         os.makedirs(module_dir, exist_ok=True)
 
@@ -251,9 +250,9 @@ IMPLEMENT_PRIMARY_GAME_MODULE({project_name}, {project_name}, "{project_name}");
     # update DefaultGame.ini
     #
 
-    config_dir = os.path.realpath(os.path.join(external_project_dir, "Config"))
-    default_game_ini_file = os.path.realpath(os.path.join(config_dir, "DefaultGame.ini"))
-    default_game_bak_file = os.path.realpath(os.path.join(config_dir, "DefaultGame.ini.bak"))
+    config_dir = spear.path.realpath(external_project_dir, "Config")
+    default_game_ini_file = spear.path.realpath(config_dir, "DefaultGame.ini")
+    default_game_bak_file = spear.path.realpath(config_dir, "DefaultGame.ini.bak")
     backup = False
     save = False
     sections = []

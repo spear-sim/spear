@@ -16,7 +16,7 @@ parser.add_argument("--create", action="store_true")
 parser.add_argument("--remove", action="store_true")
 parser.add_argument("--skip-create-directories", action="store_true")
 parser.add_argument("--skip-remove-directories", action="store_true")
-parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--unreal-project-dir", default=spear.path.realpath(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
 args = parser.parse_args()
 
 assert args.create + args.remove == 1
@@ -25,9 +25,9 @@ assert os.path.exists(args.unreal_project_dir)
 
 if __name__ == "__main__":
 
-    external_content_dir = os.path.realpath(args.external_content_dir)
+    external_content_dir = spear.path.realpath(args.external_content_dir)
 
-    # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the
+    # We do not want to use spear.path.realpath(...) here, because that will resolve to the directory inside the
     # user's external directory. Instead, we want this path to refer to the symlinked path inside the user's
     # Unreal project directory.
     unreal_project_content_root_dir = os.path.join(args.unreal_project_dir, "Content")
@@ -43,9 +43,9 @@ if __name__ == "__main__":
         os.makedirs(unreal_project_content_base_dir, exist_ok=True)
 
     # remove existing symlink
-    if spear.tools.path_exists(path=unreal_project_content_dir):
+    if spear.path.path_exists(path=unreal_project_content_dir):
         spear.log("File or directory or symlink exists, removing: ", unreal_project_content_dir)
-        spear.tools.remove_path(path=unreal_project_content_dir)
+        spear.path.remove_path(path=unreal_project_content_dir)
 
     # create new symlink
     if args.create:

@@ -25,8 +25,8 @@ def process_scene():
     actors = spear.editor.find_actors()
     actors = { spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_id=True): spear.editor.get_actor_desc(actor=actor) for actor in actors }
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
+    unreal_metadata_dir = spear.path.realpath(args.export_dir, "unreal_metadata")
+    actors_json_file = spear.path.realpath(unreal_metadata_dir, "scene.json")
     spear.log("Writing JSON file: " + actors_json_file)
     os.makedirs(unreal_metadata_dir, exist_ok=True)
     with open(actors_json_file, "w") as f:

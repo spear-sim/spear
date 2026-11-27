@@ -112,7 +112,7 @@ image_descs = \
         "read_pixels_array_name": "PostProcessInput2",
         "save_raw_data": True,
         "channels": [0,1,2], # RGB (drop A)
-        "visualize_func": lambda data, R_camera_from_world : (np.clip(spear.rendering.tone_map_hypersim(image=data, mask=np.ones(data.shape[:2], dtype=bool)), 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # tone-map HDR RGB to [0,1] using all pixels, then RGB [0,1] -> BGR uint8
+        "visualize_func": lambda data, R_camera_from_world : (np.clip(spear.image.tone_map_hypersim(image=data, mask=np.ones(data.shape[:2], dtype=bool)), 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # tone-map HDR RGB to [0,1] using all pixels, then RGB [0,1] -> BGR uint8
     },
     {
         "name": "sp_depth_meters",
@@ -121,14 +121,14 @@ image_descs = \
         "read_pixels_array_name": "SpDepthMeters",
         "save_raw_data": True,
         "channels": [0], # R (drop GBA if present)
-        "visualize_func": lambda data, R_camera_from_world : cv2.applyColorMap((np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0)*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS) # normalize to max depth of 7.5 meters, then colorize
+        "visualize_func": lambda data, R_camera_from_world : cv2.applyColorMap((spear.image.normalize_depth(depth=data[:,:,0], max_depth_range=7.5)*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS) # normalize to max depth of 7.5 meters, then colorize
     }
 ]
 
 if not args.optimized:
-    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images", "non_optimized", scene_desc["name"]))
+    images_dir = spear.path.realpath(os.path.dirname(__file__), "images", "non_optimized", scene_desc["name"])
 else:
-    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images", "optimized", scene_desc["name"]))
+    images_dir = spear.path.realpath(os.path.dirname(__file__), "images", "optimized", scene_desc["name"])
 
 
 def save_images(camera_pose, arrays):
@@ -136,11 +136,11 @@ def save_images(camera_pose, arrays):
     R_camera_from_world = R_world_from_camera.T.A
     for image_desc in image_descs:
         data = arrays[image_desc["name"]]
-        image_file = os.path.realpath(os.path.join(images_dir, image_desc["name"], f"{camera_pose['index']:04d}.png"))
+        image_file = spear.path.realpath(images_dir, image_desc["name"], f"{camera_pose['index']:04d}.png")
         image = image_desc["visualize_func"](data=data, R_camera_from_world=R_camera_from_world)
         cv2.imwrite(image_file, image)
         if image_desc["save_raw_data"]:
-            raw_data_file = os.path.realpath(os.path.join(images_dir, image_desc["name"], f"{camera_pose['index']:04d}.npy"))
+            raw_data_file = spear.path.realpath(images_dir, image_desc["name"], f"{camera_pose['index']:04d}.npy")
             np.save(raw_data_file, data.astype(np.float16))
 
 
@@ -157,20 +157,20 @@ if __name__ == "__main__":
 
     # create output dir
     for image_desc in image_descs:
-        image_dir = os.path.realpath(os.path.join(images_dir, image_desc["name"]))
+        image_dir = spear.path.realpath(images_dir, image_desc["name"])
         if os.path.exists(image_dir):
             spear.log("Directory exists, removing: ", image_dir)
             shutil.rmtree(image_dir, ignore_errors=True)
         os.makedirs(image_dir, exist_ok=True)
 
     # get camera poses
-    camera_poses_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "camera_poses"))
-    camera_poses_file = os.path.realpath(os.path.join(camera_poses_dir, f"{scene_desc['name']}.csv"))
+    camera_poses_dir = spear.path.realpath(os.path.dirname(__file__), "camera_poses")
+    camera_poses_file = spear.path.realpath(camera_poses_dir, f"{scene_desc['name']}.csv")
     df = pd.read_csv(camera_poses_file, comment="#")
     camera_poses = df.to_records()
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()

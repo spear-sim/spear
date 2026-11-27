@@ -42,25 +42,25 @@ def process_scene():
         images_dir_prefix = "final"
         video_crf = crf
 
-    images_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_path_images", images_dir_prefix))
+    images_dir = spear.path.realpath(args.pipeline_dir, "free_space_camera_path_images", images_dir_prefix)
     assert os.path.exists(images_dir)
-    videos_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_path_videos", images_dir_prefix))
+    videos_dir = spear.path.realpath(args.pipeline_dir, "free_space_camera_path_videos", images_dir_prefix)
     os.makedirs(videos_dir, exist_ok=True)
 
     ffmpeg_executable = imageio_ffmpeg.get_ffmpeg_exe()
 
-    path_images_dirs = sorted([ path_images_dir for path_images_dir in glob.glob(os.path.join(images_dir, "*")) if os.path.isdir(path_images_dir) ])
+    path_images_dirs = sorted([ path_images_dir for path_images_dir in glob.glob(spear.path.realpath(images_dir, "*")) if os.path.isdir(path_images_dir) ])
     for path_images_dir in path_images_dirs:
 
         # The images in each path's subdirectory are named by their zero-padded frame index (see
         # generate_free_space_camera_path_images.py), which ffmpeg reads as a numbered sequence.
-        video_file = os.path.realpath(os.path.join(videos_dir, f"{os.path.basename(path_images_dir)}.mp4"))
+        video_file = spear.path.realpath(videos_dir, f"{os.path.basename(path_images_dir)}.mp4")
         spear.log("Writing video file: ", video_file)
         cmd = [
             ffmpeg_executable, "-y", "-loglevel", "warning",
             "-framerate", str(frame_rate),
             "-start_number", "0",
-            "-i", os.path.join(path_images_dir, "%04d.png"),
+            "-i", spear.path.realpath(path_images_dir, "%04d.png"),
             "-c:v", "libx264",
             "-crf", str(video_crf),
             "-pix_fmt", "yuv420p",

@@ -37,7 +37,7 @@ def get_transforms(df, transform_names):
 if __name__ == "__main__":
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
             character = {}
 
-            transforms_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses", f"{character_desc['name']}.csv"))
+            transforms_file = spear.path.realpath(os.path.dirname(__file__), "character_poses", f"{character_desc['name']}.csv")
             character["data_frame"] = pd.read_csv(transforms_file, comment="#")
 
             # there is no point specifying a location and rotation yet, because the spawned actor won't have a

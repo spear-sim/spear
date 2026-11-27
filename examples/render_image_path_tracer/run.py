@@ -29,7 +29,7 @@ visualize_funcs = {
     "PathTracingNormal":           lambda data : np.clip((1.0 + data[:,:,[0,1,2]])/2.0, 0.0, 1.0),
     "PathTracingRadiance":         lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
     "PathTracingVariance":         lambda data : (data[:,:,0] - np.min(data[:,:,0])) / (np.max(data[:,:,0]) - np.min(data[:,:,0]) + 1e-8),
-    "SceneDepth":                  lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 750.0), 0.0, 1.0) # normalize to max depth of 750 cm
+    "SceneDepth":                  lambda data : spear.image.normalize_depth(depth=data[:,:,0], max_depth_range=750.0) # normalize to max depth of 750 cm
 }
 
 parser = argparse.ArgumentParser()
@@ -69,14 +69,14 @@ if denoiser:
 if __name__ == "__main__":
 
     # create output dir
-    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+    images_dir = spear.path.realpath(os.path.dirname(__file__), "images")
     if os.path.exists(images_dir):
         spear.log("Directory exists, removing: ", images_dir)
         shutil.rmtree(images_dir, ignore_errors=True)
     os.makedirs(images_dir, exist_ok=True)
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
@@ -208,7 +208,7 @@ if __name__ == "__main__":
         data_bundle = component.read_pixels()
 
     for name, data in data_bundle["arrays"].items():
-        image_file = os.path.realpath(os.path.join(images_dir, f"{component_name}.{name}.png"))
+        image_file = spear.path.realpath(images_dir, f"{component_name}.{name}.png")
         image = visualize_funcs[name](data=data)
         if image.dtype != np.uint8:
             image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)

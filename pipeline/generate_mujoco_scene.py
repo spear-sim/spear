@@ -57,8 +57,8 @@ main_mjcf_str = \
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
-    actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
+    collision_geometry_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry")
+    actors_json_file = spear.path.realpath(collision_geometry_dir, "scene.json")
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
@@ -72,21 +72,21 @@ def process_scene():
     for actor_name, actor_kinematic_tree in actors.items():
         add_mujoco_elements(actor_name=actor_name, kinematic_tree=actor_kinematic_tree, meshes_element=meshes_element, bodies_element=bodies_element, color=color)
 
-    mujoco_scene_dir = os.path.realpath(os.path.join(args.pipeline_dir, "mujoco_scene"))
+    mujoco_scene_dir = spear.path.realpath(args.pipeline_dir, "mujoco_scene")
     spear.log("Creating directory if it does not already exist: ", mujoco_scene_dir)
     os.makedirs(mujoco_scene_dir, exist_ok=True)
 
-    meshes_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "meshes.mjcf"))
+    meshes_mjcf_file = spear.path.realpath(mujoco_scene_dir, "meshes.mjcf")
     spear.log("Writing MJCF file: ", meshes_mjcf_file)
     with open(meshes_mjcf_file, "w") as f:
         f.write(get_element_str(element=meshes_element))
 
-    bodies_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "bodies.mjcf"))
+    bodies_mjcf_file = spear.path.realpath(mujoco_scene_dir, "bodies.mjcf")
     spear.log("Writing MJCF file: ", bodies_mjcf_file)
     with open(bodies_mjcf_file, "w") as f:
         f.write(get_element_str(element=bodies_element))
 
-    main_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "main.mjcf"))
+    main_mjcf_file = spear.path.realpath(mujoco_scene_dir, "main.mjcf")
     spear.log("Writing MJCF file: ", main_mjcf_file)
     with open(main_mjcf_file, "w") as f:
         f.write(main_mjcf_str)
@@ -264,7 +264,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
         # TODO: retrieve desired decomposition strategy from the JSON data
         convex_decomposition_strategy = "coacd"
 
-        # we don't use os.path.realpath here because we don't want to convert to an absolute path
+        # we don't use spear.path.realpath(...) here because we don't want to convert to an absolute path
         merge_id_obj_dir = posixpath.join(
             "..",
             "collision_geometry",
@@ -276,7 +276,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
         part_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"]
         for part_id in part_ids:
 
-            # we don't use os.path.realpath here because we don't want to convert to an absolute path
+            # we don't use spear.path.realpath(...) here because we don't want to convert to an absolute path
             part_id_obj_path = posixpath.join(merge_id_obj_dir, f"part_id_{part_id:04}.obj")
 
             if args.color_mode == "unique_color_per_geom":

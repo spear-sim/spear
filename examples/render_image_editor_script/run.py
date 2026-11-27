@@ -66,7 +66,7 @@ def script():
     spear.editor.imshow(name="final_tone_curve_hdr", image=data_bundle["arrays"]["data"])
 
     # save image (cv2 writes the native BGR, dropping alpha)
-    image_file = os.path.realpath(os.path.join(os.path.dirname(file), "image.png"))
+    image_file = spear.path.realpath(os.path.dirname(file), "image.png")
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, data_bundle["arrays"]["data"][:,:,[0,1,2]])
 

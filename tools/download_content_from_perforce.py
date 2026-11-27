@@ -89,7 +89,7 @@ if __name__ == '__main__':
         source_rel_path = posixpath.relpath(source_path, source_base_dir)
         source_rel_dir = posixpath.dirname(source_rel_path)
         source_rel_dir_tokens = pathlib.PurePosixPath(source_rel_dir).parts
-        destination_path = os.path.join(destination_base_path, *source_rel_dir_tokens, source_file)
+        destination_path = spear.path.realpath(destination_base_path, *source_rel_dir_tokens, source_file)
         destination_dir = os.path.dirname(destination_path)
 
         os.makedirs(destination_dir, exist_ok=True)

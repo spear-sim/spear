@@ -64,13 +64,13 @@ def get_data_frame(transforms):
 if __name__ == "__main__":
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    config = spear.get_config(user_config_files=[spear.path.realpath(os.path.dirname(__file__), "user_config.yaml")])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
     # create output dir
-    character_poses_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses"))
+    character_poses_dir = spear.path.realpath(os.path.dirname(__file__), "character_poses")
     if os.path.exists(character_poses_dir):
         spear.log("Directory exists, removing: ", character_poses_dir)
         shutil.rmtree(character_poses_dir, ignore_errors=True)
@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
     # save bone transforms in a separate CSV file for each character
     for character in characters:
-        transforms_file = os.path.realpath(os.path.join(character_poses_dir, f"{character['name']}.csv"))
+        transforms_file = spear.path.realpath(character_poses_dir, f"{character['name']}.csv")
         character["data_frame"].to_csv(transforms_file, mode="w", index=False)
 
     spear.log("Done.")

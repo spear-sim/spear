@@ -76,8 +76,8 @@ def process_scene():
 
     # Read the free-space points and the mutual-visibility graph computed by generate_free_space_points.py and
     # generate_free_space_visibility_graph.py.
-    free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
-    visibility_graph_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5"))
+    free_space_points_file = spear.path.realpath(args.pipeline_dir, "free_space_points", "free_space_points.h5")
+    visibility_graph_file = spear.path.realpath(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5")
     spear.log("Reading free-space points file: ", free_space_points_file)
     assert os.path.exists(free_space_points_file)
     spear.log("Reading visibility graph file: ", visibility_graph_file)
@@ -113,8 +113,8 @@ def process_scene():
     # Save the candidate free-space bounding boxes as axis-aligned min and max corners, along with the indices of
     # the subset selected to cover the free-space points (phase 1) and the additional subset selected to cover the
     # phase-1 boxes' footprints (phase 2).
-    free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_bounding_boxes"))
-    free_space_bounding_boxes_file = os.path.realpath(os.path.join(free_space_dir, "free_space_bounding_boxes.h5"))
+    free_space_dir = spear.path.realpath(args.pipeline_dir, "free_space_bounding_boxes")
+    free_space_bounding_boxes_file = spear.path.realpath(free_space_dir, "free_space_bounding_boxes.h5")
     spear.log("Writing free-space bounding boxes file: ", free_space_bounding_boxes_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_bounding_boxes_file, "w") as f:
