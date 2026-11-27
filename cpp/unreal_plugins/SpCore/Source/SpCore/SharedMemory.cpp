@@ -293,6 +293,7 @@ void SharedMemory::initialize(uint64_t initial_unique_id)
 
     try {
         s_shared_memory_fence_ = std::make_unique<SharedMemoryFence>();
+        SP_ASSERT(s_shared_memory_fence_);
     } catch (const SharedIdMutexError& e) {
         SP_LOG("    ERROR: Couldn't acquire shared memory ID id=", e.getId(), " (id_string=", e.getIdString(), "). The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
         SP_ASSERT(false);

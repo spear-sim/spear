@@ -33,14 +33,14 @@ void Config::requestInitialize()
     FString config_file;
     if (FParse::Value(FCommandLine::Get(), Unreal::toTCharPtr("-sp-config-file="), config_file)) {
         std::string config_file_str = Unreal::toStdString(config_file);
-        SP_LOG("    Found config file via the -sp-config-file command-line argument...");
+        SP_LOG("Found config file via the -sp-config-file command-line argument...");
         initialize(config_file_str);
     }
 }
 
 void Config::initialize(const std::string& config_file)
 {
-    SP_LOG("    Initializing config system from file: ", config_file);
+    SP_LOG("Initializing config system from file: ", config_file);
 
     std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
     g_config_node = YAML::LoadFile(config_file);
@@ -49,7 +49,7 @@ void Config::initialize(const std::string& config_file)
 
 void Config::terminate()
 {
-    SP_LOG("    Terminating config system...");
+    SP_LOG("Terminating config system...");
 
     std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
     g_config_node.reset();

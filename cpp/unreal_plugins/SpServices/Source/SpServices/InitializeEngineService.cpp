@@ -7,4 +7,11 @@
 
 #include <memory> // std::make_unique
 
-std::unique_ptr<InitializeEngineService> InitializeEngineService::create() { return std::make_unique<InitializeEngineService>(); }
+#include "SpCore/Assert.h"
+
+std::unique_ptr<InitializeEngineService> InitializeEngineService::create()
+{
+    std::unique_ptr<InitializeEngineService> service = std::make_unique<InitializeEngineService>();
+    SP_ASSERT(service);
+    return service;
+}

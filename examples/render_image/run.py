@@ -55,10 +55,14 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
-    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
-    # 4 frames)
+    # waits for the engine to be completely idle and advances a minimum of 4 frames, recommended after spawning a camera sensor
     game.async_loading_service.wait_for_engine_idle()
+
+    # advance by at least num_frames
+    # instance.step(num_frames=2)
+
+    # advance for at least time_seconds
+    # instance.warm_up(time_seconds=2.0)
 
     # get rendered frame
     with instance.begin_frame():

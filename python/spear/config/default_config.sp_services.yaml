@@ -26,8 +26,8 @@ SP_SERVICES:
     # The watchdog thread checks every WATCHDOG_SLEEP_TIME_SECONDS if the game thread has been waiting for work in
     # a work queue for longer than WATCHDOG_MAX_TIME_SECONDS. If so, the watchdog thread prints an error, puts
     # EngineService into an error state, and un-stalls the game thread by resetting the work queue.
-    WATCHDOG_SLEEP_TIME_SECONDS: 1.0
-    WATCHDOG_MAX_TIME_SECONDS: 10.0
+    WATCHDOG_SLEEP_TIME_SECONDS: 0.5
+    WATCHDOG_MAX_TIME_SECONDS: 2.0
 
     # Print debug info in EngineService.
     PRINT_CALL_DEBUG_INFO: False

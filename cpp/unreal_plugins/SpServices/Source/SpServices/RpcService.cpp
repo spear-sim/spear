@@ -7,4 +7,11 @@
 
 #include <memory> // std::make_unique
 
-std::unique_ptr<RpcService> RpcService::create() { return std::make_unique<RpcService>(); }
+#include "SpCore/Assert.h"
+
+std::unique_ptr<RpcService> RpcService::create()
+{
+    std::unique_ptr<RpcService> service = std::make_unique<RpcService>();
+    SP_ASSERT(service);
+    return service;
+}

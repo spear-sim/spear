@@ -192,10 +192,18 @@ public:
             // Make sure the game thread isn't using any batched work queues before we re-initialize them.
             releaseGameThread();
 
-            // Prevent the watchdog thread from accessing the work queues or setting the error state while we
-            // re-initialize them. We acquire this lock after calling releaseGameThread() rather than before,
-            // to avoid holding it while waiting on the game thread.
-            std::lock_guard<std::mutex> watchdog_lock(watchdog_mutex_);
+            // Prevent the watchdog thread from accessing the work queues or setting the error state, and prevent
+            // shutdown() from terminating the work queues, while we re-initialize them. We acquire this lock after
+            // calling releaseGameThread() rather than before, to avoid holding it while waiting on the game thread.
+            std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
+
+            // If shutdown() has already been called, then the work queues have been terminated, and we must not
+            // re-initialize them, because the game thread will never execute them, so any RPC handler that
+            // schedules work on them would wait forever.
+            if (shutdown_) {
+                SP_LOG("worker_thread: ERROR: engine_service.initialize was called after EngineService::shutdown(), returning without re-initializing...");
+                return;
+            }
 
             // Reset frame state.
             frame_state_ = FrameState::Idle;
@@ -231,10 +239,10 @@ public:
                 end_frame_being_drained_by_gt_   = static_cast<int>(BatchedQueues::EndFrameA);
             }
 
-            // WorkQueue::initialize() replaces the queue's io_context, which is only safe if no other thread is
-            // using it. The game thread isn't inside run() on any batched work queue, because we called
-            // releaseGameThread() above, and the watchdog thread can't schedule work on them, because we're holding
-            // watchdog_mutex_.
+            // WorkQueue::initialize() replaces the queue's io_context, which is only safe if the game thread isn't
+            // inside WorkQueue::run() or WorkQueue::pollOne(). The game thread isn't inside run() on any batched
+            // work queue, because we called releaseGameThread() above, and it isn't inside pollOne() on the editor
+            // transaction work queue, because we're not inside an editor transaction.
 
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 batched_work_queues_.at(i).initialize();
@@ -265,15 +273,15 @@ public:
             // Prevent the watchdog thread from accessing the work queues while we terminate them. We acquire
             // this lock after calling releaseGameThread() rather than before, to avoid holding it while waiting
             // on the game thread.
-            std::lock_guard<std::mutex> watchdog_lock(watchdog_mutex_);
+            std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
 
             // Set the frame state to prevent the game thread from executing any more work queues.
             frame_state_ = FrameState::Terminating;
 
-            // WorkQueue::terminate() destroys the queue's io_context, which is only safe if no other thread is
-            // using it. The game thread isn't inside run() on any batched work queue, because we called
-            // releaseGameThread() above, and the watchdog thread can't schedule work on them, because we're holding
-            // watchdog_mutex_.
+            // WorkQueue::terminate() destroys the queue's io_context, which is only safe if the game thread isn't
+            // inside WorkQueue::run() or WorkQueue::pollOne(). The game thread isn't inside run() on any batched
+            // work queue, because we called releaseGameThread() above, and it isn't inside pollOne() on the editor
+            // transaction work queue, because we're not inside an editor transaction.
 
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 batched_work_queues_.at(i).terminate();
@@ -329,9 +337,7 @@ public:
                 // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                 std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
 
-                batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
-                batched_work_queue_ready_futures_.at(begin_frame_writable_by_wt_) = batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_).get_future();
-                batched_work_queue_ready_promises_set_.at(begin_frame_writable_by_wt_) = false;
+                resetBatchedWorkQueueReadyPromise(begin_frame_writable_by_wt_);
 
                 // Signal to the game thread that we will be queuing additional BeginFrame work.
                 SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
@@ -371,9 +377,7 @@ public:
                 // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                 std::swap(end_frame_being_drained_by_gt_, end_frame_writable_by_wt_);
 
-                batched_work_queue_ready_promises_.at(end_frame_writable_by_wt_) = std::promise<void>();
-                batched_work_queue_ready_futures_.at(end_frame_writable_by_wt_)  = batched_work_queue_ready_promises_.at(end_frame_writable_by_wt_).get_future();
-                batched_work_queue_ready_promises_set_.at(end_frame_writable_by_wt_) = false;
+                resetBatchedWorkQueueReadyPromise(end_frame_writable_by_wt_);
 
                 // Signal to the game thread that we will be queuing additional EndFrame work.
                 SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
@@ -442,9 +446,7 @@ public:
                     // and future if we push the queue to the FIFO, because otherwise the game thread will never
                     // set the promise, and releaseGameThread() would wait on the future forever.
                     if (request_begin_frame) {
-                        batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
-                        batched_work_queue_ready_futures_.at(begin_frame_writable_by_wt_) = batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_).get_future();
-                        batched_work_queue_ready_promises_set_.at(begin_frame_writable_by_wt_) = false;
+                        resetBatchedWorkQueueReadyPromise(begin_frame_writable_by_wt_);
 
                         SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
                         SP_ASSERT(batched_work_queue_fifo_.empty() || batched_work_queue_fifo_.back().second == BatchedQueueType::EndFrame);
@@ -634,8 +636,26 @@ public:
         watchdog_condition_variable_.notify_one();
         watchdog_thread_.join();
 
+        // Prevent engine_service.initialize from re-initializing the work queues after we terminate them below.
+        // engine_service.initialize checks shutdown_ while holding lifecycle_mutex_, so either it finishes
+        // re-initializing the work queues before we acquire the lock, in which case we terminate them below, or it
+        // observes that shutdown_ is true and returns without re-initializing them.
+
+        std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
+
+        // Enter the error state, so any RPC handler that starts executing from now on returns immediately
+        // rather than waiting on the game thread.
+
+        request_error_ = true;
+
+        // Release any RPC handler that is waiting in engine_service.begin_frame, engine_service.execute_frame,
+        // or engine_service.end_frame. We set shutdown_ while holding both lifecycle_mutex_ and
+        // batched_work_queue_mutex_, so it can be read while holding either one (see engine_service.initialize
+        // and resetBatchedWorkQueueReadyPromise(...)).
+
         {
             std::lock_guard lock(batched_work_queue_mutex_);
+            shutdown_ = true;
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 if (!batched_work_queue_ready_promises_set_.at(i)) {
                     batched_work_queue_ready_promises_.at(i).set_value();
@@ -643,6 +663,19 @@ public:
                 }
             }
         }
+
+        // Release any RPC handler that is waiting on a task that will never execute, e.g., because the Python
+        // client scheduled the task inside an instance.begin_frame() block, but the engine exited before the
+        // game thread got a chance to execute it. Terminating a work queue destroys its pending tasks, and any
+        // task scheduled after this point is discarded immediately (see WorkQueue::scheduleFunc(...)), so the
+        // corresponding futures throw a broken-promise exception. This is safe because we're on the game
+        // thread, so it isn't inside WorkQueue::run() or WorkQueue::pollOne().
+
+        for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
+            batched_work_queues_.at(i).terminate();
+        }
+
+        editor_transaction_work_queue_.terminate();
     }
 
 protected:
@@ -1084,6 +1117,26 @@ private:
         return TReturn();
     }
 
+    // Called from the worker thread in engine_service.begin_frame, engine_service.execute_frame, and
+    // engine_service.end_frame (if in single-step mode) while holding batched_work_queue_mutex_, to create a new
+    // promise and future for a queue that is about to be pushed to the FIFO. If shutdown() has already been
+    // called, the game thread will never set the new promise, so we set it immediately. Otherwise, a subsequent
+    // call to releaseGameThread() would wait on the corresponding future forever. shutdown() sets shutdown_ while
+    // holding batched_work_queue_mutex_, so either we create the promise before shutdown() sets the unset
+    // promises, or we observe that shutdown_ is true here.
+
+    void resetBatchedWorkQueueReadyPromise(int queue_id)
+    {
+        batched_work_queue_ready_promises_.at(queue_id) = std::promise<void>();
+        batched_work_queue_ready_futures_.at(queue_id) = batched_work_queue_ready_promises_.at(queue_id).get_future();
+        batched_work_queue_ready_promises_set_.at(queue_id) = false;
+
+        if (shutdown_) {
+            batched_work_queue_ready_promises_.at(queue_id).set_value();
+            batched_work_queue_ready_promises_set_.at(queue_id) = true;
+        }
+    }
+
     // Called from the worker thread at the start of engine_service.initialize and engine_service.terminate, so it's
     // safe for those entry points to re-initialize or terminate the batched work queues, promises, and futures. If a
     // previous client exited in the middle of a transaction, the game thread might be stalled in run() waiting for a
@@ -1213,8 +1266,9 @@ private:
 
         std::chrono::duration<double> sleep_time(watchdog_sleep_time_seconds_);
 
-        std::unique_lock<std::mutex> lock(watchdog_mutex_);
-        while (!watchdog_condition_variable_.wait_for(lock, sleep_time, [this]() -> bool { return watchdog_stop_requested_; })) {
+        std::unique_lock<std::mutex> watchdog_lock(watchdog_mutex_);
+        while (!watchdog_condition_variable_.wait_for(watchdog_lock, sleep_time, [this]() -> bool { return watchdog_stop_requested_; })) {
+            std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 uint64_t idle_id = batched_work_queues_.at(i).getIdleId();
@@ -1233,7 +1287,7 @@ private:
                         #else
                             #error
                         #endif
-                        SP_LOG("watchdog_thread: ERROR: The game thread has been stalled for ", seconds_str, " seconds while executing the work queue \"", queue_name, "\". No new work has been scheduled on the queue in that time, and it has also not received a signal indicating that it is allowed to proceed. Attempting to un-stall the game thread by calling scheduleReset() on the queue.");
+                        SP_LOG("watchdog_thread: ERROR: The game thread has been stalled for ", seconds_str, " seconds while executing the work queue \"", queue_name, "\". No new work has been scheduled on the queue in that time, and it has also not received a signal indicating that it is allowed to proceed. Attempting to un-stall the game thread by calling scheduleReset() on the queue...");
                         request_error_ = true;
                         batched_work_queues_.at(i).scheduleReset("engine_service.watchdog." + queue_name + ".reset");
                         last_idle_id_change_times.at(i) = now;
@@ -1322,20 +1376,30 @@ private:
     std::atomic<bool> request_terminate_ = false;
 
     // Written by the worker thread in engine_service.initialize. Written by the worker thread and the game
-    // thread in executeFuncInTryCatch(...), and by the watchdog thread in watchdog(), to indicate that an error
-    // has occurred. Read by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
-    // engine_service.end_frame, and engine_service.begin_editor_transaction, engine_service.end_editor_transaction.
-    // Read by the game thread in beginFrame(), endFrame(), and executeEditorPostTransaction(). Read by the worker
-    // thread and the game thread in executeFuncInTryCatch(...).
+    // thread in executeFuncInTryCatch(...), by the watchdog thread in watchdog(), and by the game thread in
+    // shutdown(), to indicate that an error has occurred. Read by the worker thread in engine_service.begin_frame,
+    // engine_service.execute_frame, engine_service.end_frame, and engine_service.begin_editor_transaction,
+    // engine_service.end_editor_transaction. Read by the game thread in beginFrame(), endFrame(), and
+    // executeEditorPostTransaction(). Read by the worker thread and the game thread in executeFuncInTryCatch(...).
     std::atomic<bool> request_error_ = false;
+
+    // Lifecycle state.
+
+    // The mutex is held by the worker thread in engine_service.initialize and engine_service.terminate while it
+    // re-initializes or terminates the work queues, by the game thread in shutdown() while it terminates the
+    // work queues, and by the watchdog thread while it checks and resets the batched work queues. shutdown_ is
+    // set to true by the game thread in shutdown() while holding both lifecycle_mutex_ and
+    // batched_work_queue_mutex_. It is read by the worker thread in engine_service.initialize while holding
+    // lifecycle_mutex_, and in resetBatchedWorkQueueReadyPromise(...) while holding batched_work_queue_mutex_.
+    std::mutex lifecycle_mutex_;
+    bool shutdown_ = false;
 
     // Watchdog state.
 
     // The watchdog thread is started in startup() and stopped in shutdown(), which are both called on the game
     // thread. The mutex and condition variable are used to wake up the watchdog thread immediately when
-    // shutdown() requests it to stop. The mutex is also held by the watchdog thread while it checks and resets
-    // the batched work queues, and by the worker thread in engine_service.initialize and
-    // engine_service.terminate while it re-initializes or terminates them.
+    // shutdown() requests it to stop. If the watchdog thread needs to hold both mutexes, it acquires
+    // watchdog_mutex_ before lifecycle_mutex_.
     std::thread watchdog_thread_;
     std::mutex watchdog_mutex_;
     std::condition_variable watchdog_condition_variable_;

@@ -150,8 +150,9 @@ void OutputLog::requestInitialize()
     SP_ASSERT(!g_std_output_device);
     SP_ASSERT(!g_buffered_output_device);
 
-    SP_LOG("    Initializing StdOutputDevice...");
+    SP_LOG("Initializing StdOutputDevice...");
     g_std_output_device = std::make_unique<StdOutputDevice>();
+    SP_ASSERT(g_std_output_device);
     GLog->AddOutputDevice(g_std_output_device.get());
     GLog->SerializeBacklog(g_std_output_device.get()); // recovers early messages, editor only, see GIsEditor in LaunchEngineLoop.cpp
 
@@ -165,8 +166,9 @@ void OutputLog::requestInitialize()
 
     if (enable_buffered_output_device) {
         SP_ASSERT(buffered_output_device_num_messages > 0);
-        SP_LOG("    Initializing BufferedOutputDevice...");
+        SP_LOG("Initializing BufferedOutputDevice...");
         g_buffered_output_device = std::make_unique<BufferedOutputDevice>(buffered_output_device_num_messages);
+        SP_ASSERT(g_buffered_output_device);
         GLog->AddOutputDevice(g_buffered_output_device.get());
         GLog->SerializeBacklog(g_buffered_output_device.get());
     }
@@ -175,13 +177,13 @@ void OutputLog::requestInitialize()
 void OutputLog::terminate()
 {
     if (g_buffered_output_device) {
-        SP_LOG("    Terminating BufferedOutputDevice...");
+        SP_LOG("Terminating BufferedOutputDevice...");
         GLog->RemoveOutputDevice(g_buffered_output_device.get());
         g_buffered_output_device = nullptr;
     }
 
     if (g_std_output_device) {
-        SP_LOG("    Terminating StdOutputDevice...");
+        SP_LOG("Terminating StdOutputDevice...");
         GLog->RemoveOutputDevice(g_std_output_device.get());
         g_std_output_device = nullptr;
     }

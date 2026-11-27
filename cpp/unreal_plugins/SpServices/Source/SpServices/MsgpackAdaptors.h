@@ -302,7 +302,7 @@
 
         SpPackedArray sp_packed_array;
 
-        if (client->verbose_allocations_) {
+        if (!client->suppress_default_logging_ && client->verbose_allocations_) {
             std::cout << "[SPEAR | MsgpackAdaptors.h] Constructing nanobind::ndarray<nanobind::numpy>..." << std::endl;
             std::cout << "[SPEAR | MsgpackAdaptors.h] sp_packed_array_view.view_.data():        " << sp_packed_array_view.view_.data() << std::endl;
             std::cout << "[SPEAR | MsgpackAdaptors.h] sp_packed_array_view.view_.size():        " << sp_packed_array_view.view_.size() << std::endl;
@@ -320,14 +320,19 @@
             {
                 std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> data_;
                 std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ = nullptr;
-                bool verbose_allocations_ = false; // needed because the deletion callback below can't capture client
+
+                // needed because the deletion callback below can't capture client
+                bool suppress_default_logging_ = false;
+                bool verbose_allocations_ = false;
             };
 
             // Allocate a Capsule on the heap. Owned by a std::unique_ptr until ownership is transferred to the
             // nanobind capsule below, so the Capsule is deleted if an exception is thrown before then.
             std::unique_ptr<Capsule> capsule_ptr = std::make_unique<Capsule>();
+            SP_ASSERT(capsule_ptr);
+            capsule_ptr->suppress_default_logging_ = client->suppress_default_logging_;
             capsule_ptr->verbose_allocations_ = client->verbose_allocations_;
-            if (client->verbose_allocations_) { std::cout << "[SPEAR | MsgpackAdaptors.h] Allocated Capsule object at memory location: " << capsule_ptr.get() << std::endl; }
+            if (!client->suppress_default_logging_ && client->verbose_allocations_) { std::cout << "[SPEAR | MsgpackAdaptors.h] Allocated Capsule object at memory location: " << capsule_ptr.get() << std::endl; }
 
             void* data_ptr = nullptr;
 
@@ -361,7 +366,7 @@
                     std::terminate(); // can't assert because of noexcept
                 }
                 Capsule* capsule_ptr = static_cast<Capsule*>(ptr);
-                if (capsule_ptr->verbose_allocations_) { std::cout << "[SPEAR | MsgpackAdaptors.h] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
+                if (!capsule_ptr->suppress_default_logging_ && capsule_ptr->verbose_allocations_) { std::cout << "[SPEAR | MsgpackAdaptors.h] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
                 capsule_ptr->object_handle_ = nullptr;
                 delete capsule_ptr; // need to delete manually because capsule_ptr.release() releases ownership without deleting
                 capsule_ptr = nullptr;
@@ -891,7 +896,6 @@
             Std::insert(objects, "world_id",        MsgpackUtils::toMsgpackObject(sp_world_desc.world_id_,        object_with_zone));
             Std::insert(objects, "is_editor_world", MsgpackUtils::toMsgpackObject(sp_world_desc.is_editor_world_, object_with_zone));
             Std::insert(objects, "is_game_world",   MsgpackUtils::toMsgpackObject(sp_world_desc.is_game_world_,   object_with_zone));
-            Std::insert(objects, "is_playing",      MsgpackUtils::toMsgpackObject(sp_world_desc.is_playing_,      object_with_zone));
             MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
         }
     };
@@ -902,12 +906,11 @@
     struct clmdep_msgpack::adaptor::convert<SpWorldDesc> {
         clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpWorldDesc& sp_world_desc) const {
             std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-            SP_ASSERT(objects.size() == 5);
+            SP_ASSERT(objects.size() == 4);
             sp_world_desc.world_           = MsgpackUtils::to<SpHandle>(objects.at("world"));
             sp_world_desc.world_id_        = MsgpackUtils::to<int64_t>(objects.at("world_id"));
             sp_world_desc.is_editor_world_ = MsgpackUtils::to<bool>(objects.at("is_editor_world"));
             sp_world_desc.is_game_world_   = MsgpackUtils::to<bool>(objects.at("is_game_world"));
-            sp_world_desc.is_playing_      = MsgpackUtils::to<bool>(objects.at("is_playing"));
             return object;
         }
     };

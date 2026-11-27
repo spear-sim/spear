@@ -32,9 +32,9 @@ def log(*args):
     for func in _log_funcs:
         func(message)
 
-def log_current_function(prefix=""):
+def log_current_function():
     caller_frame = inspect.currentframe().f_back
-    message = _log_get_prefix(caller_frame=caller_frame) + prefix + caller_frame.f_code.co_qualname
+    message = _log_get_prefix(caller_frame=caller_frame) + caller_frame.f_code.co_qualname
     if _default_log_enabled:
         print(message, flush=True)
     for func in _log_funcs:

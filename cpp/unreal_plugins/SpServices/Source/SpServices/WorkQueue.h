@@ -45,8 +45,11 @@ public:
         SP_ASSERT(executor_work_guard_);
     }
 
-    // Typically called from the worker thread from the engine_service.terminate entry point to shut down
-    // the work queue.
+    // Typically called from the worker thread from the engine_service.terminate entry point, or from the game
+    // thread in EngineService::shutdown(), to shut down the work queue. Destroying io_context_ destroys any
+    // tasks that are still pending without executing them, so any future waiting on one of these tasks will
+    // throw a broken-promise exception rather than waiting forever. Must not be called while another thread
+    // is inside run() or pollOne().
 
     void terminate()
     {
@@ -73,6 +76,7 @@ public:
 
             io_context_->restart();
             executor_work_guard_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(io_context_->get_executor());
+            SP_ASSERT(executor_work_guard_);
         }
     }
 
@@ -90,8 +94,6 @@ public:
     auto scheduleFunc(const std::string& func_name, const TFunc& func, TArgs&... args)
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
-
-        SP_ASSERT(io_context_);
 
         // This function is typically called from the worker thread, but the lambda declared below is
         // typically executed on the game thread when run() is called, i.e., during EngineService::beginFrameHandler(...)
@@ -191,7 +193,19 @@ public:
             (*inner_task_ptr)();
         };
 
-        boost::asio::post(*io_context_, std::move(outer_task));
+        // We hold mutex_ while posting, so terminate() can't destroy io_context_ while we're using it. If the
+        // work queue has been terminated, we discard the task without executing it, just like terminate()
+        // discards any tasks that are still pending, so the caller's future will throw a broken-promise
+        // exception rather than waiting forever.
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (io_context_) {
+                boost::asio::post(*io_context_, std::move(outer_task));
+            } else {
+                SP_LOG("ERROR: Work queue ", getName(), " has been terminated, discarding function ", func_name, "...");
+            }
+        }
 
         return future;
     }

@@ -283,9 +283,14 @@ def _initialize_instance():
     _instance = spear.Instance(config=config)
     _log("Instance created.")
 
-    world_descs = _instance.world_registry_service.get_world_descs()
+    # register all worlds in case a previous session was interrupted inside an invalidate() block, see Instance.get_game()
+    with _instance.begin_frame():
+        pass
+    with _instance.end_frame():
+        _instance.world_registry_service.register_worlds()
+        world_descs = _instance.world_registry_service.get_world_descs()
     editor_available = any(desc.is_editor_world for desc in world_descs.values())
-    game_available = any(desc.is_game_world and desc.is_playing for desc in world_descs.values())
+    game_available = any(desc.is_game_world for desc in world_descs.values())
 
     if not editor_available and not game_available:
         _log("ERROR: No editor or game available.")

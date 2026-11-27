@@ -7,12 +7,19 @@
 
 #include <memory> // std::make_unique, std::unique_ptr
 
+#include "SpCore/Assert.h"
+
 #include "SpServices/EngineService.h"
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/RpcServer.h"
 #include "SpServices/SharedMemoryService.h"
 
 template <CUnrealEntryPointBinder TEntryPointBinder>
-std::unique_ptr<NavigationService> NavigationService::create(TEntryPointBinder* unreal_entry_point_binder, SharedMemoryService* shared_memory_service) { return std::make_unique<NavigationService>(unreal_entry_point_binder, shared_memory_service); }
+std::unique_ptr<NavigationService> NavigationService::create(TEntryPointBinder* unreal_entry_point_binder, SharedMemoryService* shared_memory_service)
+{
+    std::unique_ptr<NavigationService> service = std::make_unique<NavigationService>(unreal_entry_point_binder, shared_memory_service);
+    SP_ASSERT(service);
+    return service;
+}
 
 template std::unique_ptr<NavigationService> NavigationService::create<EngineService<RpcServer>>(EngineService<RpcServer>*, SharedMemoryService*);

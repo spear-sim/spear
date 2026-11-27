@@ -113,6 +113,7 @@ private:
                 TReturn return_value = std::apply(func, args_unpacked_tuple);
                 SharedMemory::fence();
                 std::unique_ptr<clmdep_msgpack::zone> return_value_zone = std::make_unique<clmdep_msgpack::zone>();
+                SP_ASSERT(return_value_zone);
                 clmdep_msgpack::object return_value_object(return_value, *return_value_zone);
                 return clmdep_msgpack::object_handle(return_value_object, std::move(return_value_zone));
             }

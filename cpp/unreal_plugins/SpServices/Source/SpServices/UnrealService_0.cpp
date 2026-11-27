@@ -7,11 +7,18 @@
 
 #include <memory> // std::make_unique, std::unique_ptr
 
+#include "SpCore/Assert.h"
+
 #include "SpServices/EngineService.h"
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/RpcServer.h"
 
 template <CUnrealEntryPointBinder TEntryPointBinder>
-std::unique_ptr<UnrealService_0> UnrealService_0::create(TEntryPointBinder* unreal_entry_point_binder) { return std::make_unique<UnrealService_0>(unreal_entry_point_binder); }
+std::unique_ptr<UnrealService_0> UnrealService_0::create(TEntryPointBinder* unreal_entry_point_binder)
+{
+    std::unique_ptr<UnrealService_0> service = std::make_unique<UnrealService_0>(unreal_entry_point_binder);
+    SP_ASSERT(service);
+    return service;
+}
 
 template std::unique_ptr<UnrealService_0> UnrealService_0::create<EngineService<RpcServer>>(EngineService<RpcServer>*);

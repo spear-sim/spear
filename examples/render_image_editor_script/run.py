@@ -50,9 +50,7 @@ def script():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
     yield
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
-    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
-    # 4 frames)
+    # waits for the engine to be completely idle and advances a minimum of 4 frames, recommended after spawning a camera sensor
     yield from game.async_loading_service.wait_for_engine_idle_in_editor_script()
 
     # get rendered frame

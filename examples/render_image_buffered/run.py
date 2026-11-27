@@ -58,9 +58,7 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         pass
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
-    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
-    # 4 frames)
+    # waits for the engine to be completely idle and advances a minimum of 4 frames, recommended after spawning a camera sensor
     game.async_loading_service.wait_for_engine_idle()
 
     spawn_y_positions = [200.0, 260.0, 320.0]
@@ -194,11 +192,9 @@ if __name__ == "__main__":
     # terminate
     with instance.begin_frame():
         pass
-    with instance.end_frame(single_step=True):
+    with instance.end_frame():
         terminate_camera(game=game, bp_camera_sensor=sb_camera, component=sb_component)
         terminate_camera(game=game, bp_camera_sensor=db_camera, component=db_component)
         terminate_camera(game=game, bp_camera_sensor=tb_camera, component=tb_component)
-
-    instance.step() # needed after the last call to instance.end_frame(single_step=True)
 
     spear.log("Done.")

@@ -44,7 +44,7 @@
 //
 
 #if SP_PLATFORM_SERVER || SP_PLATFORM_CLIENT
-    struct SpFuncSignatureDesc // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpFuncSignatureDesc
     {
         std::string name_;
         std::vector<int> type_ids_;
@@ -58,7 +58,7 @@
 //
 
 #if SP_PLATFORM_SERVER
-    struct SpFuture // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpFuture
     {
         void* future_ptr_ = nullptr;
         std::string type_id_;
@@ -78,11 +78,11 @@
 //
 
 #if SP_PLATFORM_SERVER || SP_PLATFORM_CLIENT
-    struct SpFunctionDesc // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpFunctionDesc
     {
-        SpHandle function_;     // SpHandle needed so SpFunctionDesc can be serialized safely on the worker thread
+        SpHandle function_;
         std::string function_name_;
-        SpHandle static_class_; // SpHandle needed so SpFunctionDesc can be serialized safely on the worker thread
+        SpHandle static_class_;
         std::string static_class_name_;
     };
 #endif
@@ -92,9 +92,9 @@
 //
 
 #if SP_PLATFORM_SERVER || SP_PLATFORM_CLIENT
-    struct SpStaticStructDesc // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpStaticStructDesc
     {
-        SpHandle static_struct_; // SpHandle needed so SpStaticStructDesc can be serialized safely on the worker thread
+        SpHandle static_struct_;
         std::string name_;
     };
 #endif
@@ -104,11 +104,11 @@
 //
 
 #if SP_PLATFORM_SERVER || SP_PLATFORM_CLIENT
-    struct SpStaticClassDesc // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpStaticClassDesc
     {
-        SpHandle static_class_;                         // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread
+        SpHandle static_class_;
         std::string name_;
-        std::vector<SpHandle> derived_to_base_classes_; // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread; includes the class itself
+        std::vector<SpHandle> derived_to_base_classes_; // includes the class itself
         std::vector<std::string> derived_to_base_class_names_;
         std::map<std::string, SpFunctionDesc> function_descs_;
     };
@@ -119,13 +119,14 @@
 //
 
 #if SP_PLATFORM_SERVER
-    struct SpWorldDesc // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpWorldDesc
     {
-        SpHandle world_; // SpHandle needed so SpWorldDesc can be serialized safely on the worker thread
+        SpHandle world_;
         int64_t world_id_ = -1;
         bool is_editor_world_ = false;
         bool is_game_world_ = false;
-        bool is_playing_ = false;
+        bool is_initialized_internal_ = false; // not exposed to Python
+        bool is_registered_internal_ = false;  // not exposed to Python
         FDelegateHandle world_begin_play_handle_;
     };
 #elif SP_PLATFORM_CLIENT
@@ -135,7 +136,6 @@
         int64_t world_id_ = -1;
         bool is_editor_world_ = false;
         bool is_game_world_ = false;
-        bool is_playing_ = false;
     };
 #else
     #error

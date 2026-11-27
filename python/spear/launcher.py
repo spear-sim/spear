@@ -22,15 +22,13 @@ class Launcher():
 
     def __init__(self, config):
         self._config = config
-        self._client = None
-        self._engine_service = None
 
         self.process = None
 
     def launch(self):
 
-        spear.log_current_function(prefix="    ")
-        spear.log("        Requesting to launch Unreal executable...")
+        spear.log_current_function()
+        spear.log("Requesting to launch Unreal executable...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
@@ -41,7 +39,7 @@ class Launcher():
             temp_dir = os.path.realpath(self._config.SPEAR.LAUNCHER.TEMP_DIR)
             temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.LAUNCHER.TEMP_CONFIG_FILE))
 
-            spear.log("        Writing temp config file: ", temp_config_file)
+            spear.log("Writing temp config file: ", temp_config_file)
 
             os.makedirs(temp_dir, exist_ok=True)
             with open(temp_config_file, "w") as f:
@@ -133,7 +131,6 @@ class Launcher():
             else:
                 assert False
 
-            spear.log("        Attempting to launch executable: ", launch_executable_internal)
             assert os.path.exists(launch_executable_internal)
 
             # spear.tools.popen_unreal_cmd(...) only adds quotes around values that contain spaces, which matters
@@ -147,11 +144,11 @@ class Launcher():
             launch_args.append(f"-sp-config-file={spear.tools.normalize_unreal_cmd_path(path=temp_config_file)}")
             cmd = [launch_executable_internal] + launch_args
 
-            spear.log("        Launching executable with the following command-line arguments:")
-            spear.log(f"            {launch_executable_internal}")
+            spear.log("Launching executable with the following command-line arguments:")
+            spear.log(f"    {launch_executable_internal}")
             for launch_arg in launch_args:
-                spear.log(f"                {launch_arg}")
-            spear.log("        Launching executable with the following config values:")
+                spear.log(f"        {launch_arg}")
+            spear.log("Launching executable with the following config values:")
             spear.log_no_prefix(self._config)
 
             popen = spear.tools.popen_unreal_cmd(cmd=cmd)
@@ -159,42 +156,44 @@ class Launcher():
 
             status = self.process.status()
             if status not in Launcher.expected_process_status_values:
-                spear.log("        ERROR: Unrecognized process status: ", status)
-                spear.log(f"        ERROR: Killing process {self.process.pid}...")
-                self.kill(log_prefix="        ")
+                spear.log("ERROR: Unrecognized process status: ", status)
+                spear.log(f"ERROR: Killing process {self.process.pid}...")
+                self.kill()
                 assert False
 
         else:
             assert False
 
-        spear.log("        Finished requesting to launch Unreal executable.")
+        spear.log("Finished requesting to launch Unreal executable.")
 
-    def initialize(self, client, engine_service):
+    def initialize(self, client):
 
-        spear.log_current_function(prefix="    ")
-
-        # engine_service hasn't been initialized yet, so we only call entry points directly through the inner client
-        self._client = client
-        self._engine_service = engine_service
+        spear.log_current_function()
+        spear.log("Requesting to initialize Unreal executable...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            pid = self._client.client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id")
+
+            # EngineService hasn't been initialized yet, so we call get_current_process_id directly through the inner client
+            pid = client.client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id")
+
             if pid == self.process.pid:
-                spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
+                spear.log("Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
             else:
-                spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_current_process_id returned {pid} but the PID of the process we just launched is {self.process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
-                self._client.terminate(log_prefix="        ")
-                self.kill(log_prefix="        ")
+                spear.log(f"ERROR: engine_globals_service.call_sync_on_worker_thread.get_current_process_id returned {pid} but the PID of the process we just launched is {self.process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
+                client.terminate()
+                self.kill()
                 assert False
         else:
             assert False
 
-    def terminate(self):
+        spear.log("Finished requesting to initialize Unreal executable.")
 
-        spear.log_current_function(prefix="    ")
-        spear.log("        Requesting to terminate Unreal executable...")
+    def terminate(self, client):
+
+        spear.log_current_function()
+        spear.log("Requesting to terminate Unreal executable...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
@@ -205,15 +204,8 @@ class Launcher():
             assert spear.__can_import_spear_ext__
             assert not spear.__can_import_unreal__
 
-            try:
-                self._engine_service.step()
-                self._engine_service.terminate() # EngineService must be explicitly terminated before requesting to exit
-                self._client.client.call("engine_globals_service.call_sync_on_worker_thread.request_exit", False) # self._engine_service has been terminated, needs to be the last entry point that gets called because the RPC server can be destroyed any time after this call
-                spear.log("        Finished terminating engine service, waiting for Unreal process to terminate...")
-            except RuntimeError:
-                spear.log("        Caught RPC timeout exception while terminating engine service, waiting for Unreal process to terminate...")
-            except Exception as e:
-                spear.log("        ERROR: Unexpected exception: ", e)
+            # EngineService has already been terminated, so we call request_exit directly through the inner client
+            client.client.request_exit(False)
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
@@ -231,20 +223,17 @@ class Launcher():
                 elapsed_time_seconds = time.time() - start_time_seconds
 
             if status in Launcher.expected_process_status_values:
-                spear.log("        ERROR: Unreal process did not terminate successfully, forcefully killing...")
-                self.kill(log_prefix="        ")
+                spear.log("ERROR: Unreal process did not terminate successfully, forcefully killing...")
+                self.kill()
         else:
             assert False
 
-        self._client = None
-        self._engine_service = None
+        spear.log("Finished requesting to terminate Unreal executable.")
 
-        spear.log("        Finished requesting to terminate Unreal executable.")
+    def kill(self):
 
-    def kill(self, log_prefix=""):
-
-        spear.log_current_function(prefix=log_prefix)
-        spear.log(f"{log_prefix}    Forcefully killing Unreal executable...")
+        spear.log_current_function()
+        spear.log("Forcefully killing Unreal executable...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             assert False
@@ -252,15 +241,13 @@ class Launcher():
             try:
                 self.process.kill()
             except psutil.NoSuchProcess:
-                spear.log(f"{log_prefix}    Process already terminated.")
+                spear.log("Process already terminated.")
             except Exception as e:
-                spear.log(f"{log_prefix}    Exception: ", e)
-            spear.log(f"{log_prefix}    Finished forcefully killing Unreal executable.")
+                spear.log("Exception: ", e)
         else:
             assert False
 
-        self._client = None
-        self._engine_service = None
+        spear.log("Finished forcefully killing Unreal executable.")
 
     def __repr__(self):
         return f"Launcher(process={self.process})"

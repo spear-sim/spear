@@ -298,8 +298,7 @@ class AsyncLoadingService(spear.Service):
 
         engine_service = self.entry_point_caller.engine_service
 
-        spear.log(f"Waiting for function to return true: {func_name}")
-        spear.log(f"Waiting for up to {max_time_seconds} seconds, logging progress every {log_interval_seconds} seconds...")
+        spear.log(f"Waiting for {func_name} to return true for up to {max_time_seconds} seconds, logging progress every {log_interval_seconds} seconds...")
 
         start_time_seconds = time.time()
         last_verbose_time_seconds = start_time_seconds
@@ -343,10 +342,10 @@ class AsyncLoadingService(spear.Service):
 
         success = num_consecutive_idle_frames == num_consecutive_idle_frames_required
         if not success:
-            spear.log("ERROR: Function never returned true, giving up...")
+            spear.log(f"ERROR: {func_name} never returned true, giving up...")
             assert False
 
-        spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
+        spear.log(f"Finished waiting for {func_name}, which returned true after {elapsed_time_seconds:.2f} seconds.")
 
     def _wait_for_in_editor_script(self, func, max_time_seconds, log_interval_seconds):
         if hasattr(func, "__qualname__"):
@@ -358,8 +357,7 @@ class AsyncLoadingService(spear.Service):
 
         engine_service = self.entry_point_caller.engine_service
 
-        spear.log(f"Waiting for function to return true: {func_name}")
-        spear.log(f"Waiting for up to {max_time_seconds} seconds, logging progress every {log_interval_seconds} seconds...")
+        spear.log(f"Waiting for {func_name} to return true for up to {max_time_seconds} seconds, logging progress every {log_interval_seconds} seconds...")
 
         start_time_seconds = time.time()
         last_verbose_time_seconds = start_time_seconds
@@ -395,7 +393,7 @@ class AsyncLoadingService(spear.Service):
 
         success = num_consecutive_idle_frames == num_consecutive_idle_frames_required
         if not success:
-            spear.log("ERROR: Function never returned true, giving up...")
+            spear.log(f"ERROR: {func_name} never returned true, giving up...")
             assert False
 
-        spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
+        spear.log(f"Finished waiting for {func_name}, which returned true after {elapsed_time_seconds:.2f} seconds.")

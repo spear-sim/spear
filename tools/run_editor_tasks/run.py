@@ -115,11 +115,11 @@ if __name__ == "__main__":
                 with instance.begin_frame():
                     pass
                 with instance.end_frame():
-                    editor.invalidate() # need to call invalidate() before calling OpenLevel()
-                    level_editor_subsystem.LoadLevel(AssetPath=map_path)
+                    with editor.invalidate():
+                        level_editor_subsystem.LoadLevel(AssetPath=map_path)
 
-                # Calling LoadLevel invalidates the old editor object, so get a new one here. This call will block
-                # until the new editor object is ready.
+                # Calling LoadLevel destroys the old editor world, so get the editor object again here to bind it
+                # to the new editor world. This call will block until the new editor world is ready.
 
                 if "wait_for_engine_idle" in task and not task["wait_for_engine_idle"]:
                     editor = instance.get_editor(wait_for_engine_idle=False)

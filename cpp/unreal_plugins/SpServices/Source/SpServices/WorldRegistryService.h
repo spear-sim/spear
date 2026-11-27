@@ -7,7 +7,6 @@
 
 #include <map>
 #include <memory> // std::unique_ptr
-#include <mutex>  // std::lock_guard
 #include <string>
 #include <vector>
 
@@ -42,23 +41,47 @@ public:
         world_initialized_actors_handle_ = FWorldDelegates::OnWorldInitializedActors.AddRaw(this, &WorldRegistryService::worldInitializedActorsHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &WorldRegistryService::worldCleanupHandler);
 
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("world_registry_service", "get_world_descs", [this]() -> std::map<std::string, SpWorldDesc> {
-            std::lock_guard<std::mutex> lock(mutex_);
-            return world_descs_;
+        //
+        // All entry points execute on the game thread, so their order relative to level changes (e.g., OpenLevel(...)
+        // or LoadLevel(...)) and world delegates is well-defined. Only worlds that are both initialized and registered
+        // are visible to the client, where initialized and registered are defined as follows. A world is initialized
+        // once it is ready for the client to interact with it (immediately for editor worlds, and after BeginPlay and
+        // any deferred initialization work that must happen after BeginPlay for game worlds). A world is registered by
+        // default, it becomes unregistered when the client calls "unregister_world" (e.g., before destroying the world
+        // via OpenLevel(...)), and it becomes registered again when the client calls "register_worlds". We never remove
+        // a world from world_descs_ until UE cleans it up in worldCleanupHandler(...), so the client can always recover
+        // from a prematurely unregistered world that was never destroyed (e.g., if an exception occurred after calling
+        // "unregister_world" but before calling OpenLevel(...)).
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "register_worlds", [this]() -> void {
+            for (auto& [name, desc] : world_descs_) {
+                if (desc.is_registered_internal_) {
+                    SP_LOG("Marking world as registered: ", name);
+                    desc.is_registered_internal_ = true;
+                }
+            }
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "remove_world", [this](SpHandle& world) -> void {
-            std::lock_guard<std::mutex> lock(mutex_);
-
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "unregister_world", [this](SpHandle& world) -> void {
             UWorld* world_ptr = UnrealUtils::toPtr<UWorld>(world);
             SP_ASSERT(world_ptr);
             std::string name = Unreal::toStdString(world_ptr->GetPathName());
             SP_ASSERT(Std::containsKey(world_descs_, name));
-            SpWorldDesc& desc = world_descs_.at(name);
-            world_ptr->OnWorldBeginPlay.Remove(desc.world_begin_play_handle_);
-            desc.world_begin_play_handle_.Reset();
 
-            Std::remove(world_descs_, name);
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("Marking world as unregistered: ", name);
+            world_descs_.at(name).is_registered_internal_ = false;
+        });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "get_world_descs", [this]() -> std::map<std::string, SpWorldDesc> {
+            std::map<std::string, SpWorldDesc> world_descs;
+            for (auto& [name, desc] : world_descs_) {
+                if (desc.is_initialized_internal_ && desc.is_registered_internal_) {
+                    Std::insert(world_descs, name, desc);
+                }
+            }
+            return world_descs;
         });
     }
 
@@ -80,7 +103,6 @@ private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
     {
         SP_ASSERT(world);
-        std::lock_guard<std::mutex> lock(mutex_);
 
         SP_LOG_CURRENT_FUNCTION();
 
@@ -96,11 +118,13 @@ private:
             desc.world_id_ = current_world_id_++;
             desc.is_editor_world_ = world->IsEditorWorld();
             desc.is_game_world_ = world->IsGameWorld();
-            desc.is_playing_ = false;
+            desc.is_initialized_internal_ = world->IsEditorWorld(); // editor worlds never BeginPlay, so they're initialized immediately
+            desc.is_registered_internal_ = true;
             desc.world_begin_play_handle_ = world->OnWorldBeginPlay.AddLambda([this, world]() {
                 worldBeginPlayHandler(world);
             });
 
+            SP_LOG("Tracking world and marking as registered: ", name);
             Std::insert(world_descs_, name, desc);
         }
     }
@@ -140,7 +164,6 @@ private:
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
     {
         SP_ASSERT(world);
-        std::lock_guard<std::mutex> lock(mutex_);
 
         SP_LOG_CURRENT_FUNCTION();
 
@@ -150,6 +173,8 @@ private:
             SpWorldDesc& desc = world_descs_.at(name);
             world->OnWorldBeginPlay.Remove(desc.world_begin_play_handle_);
             desc.world_begin_play_handle_.Reset();
+
+            SP_LOG("Untracking world: ", name);
             Std::remove(world_descs_, name);
         }
 
@@ -168,14 +193,12 @@ private:
     void worldBeginPlayHandler(UWorld* world)
     {
         SP_ASSERT(world);
-        std::lock_guard<std::mutex> lock(mutex_);
 
         SP_LOG_CURRENT_FUNCTION();
 
         std::string name = Unreal::toStdString(world->GetPathName());
         SP_ASSERT(Std::containsKey(world_descs_, name));
         SpWorldDesc& desc = world_descs_.at(name);
-        desc.is_playing_ = true;
 
         //
         // Override game paused
@@ -210,8 +233,14 @@ private:
                     SP_LOG("    Forcing skylight updates every frame for ", max_duration_seconds, " seconds...");
                     setSkylightCVar();
                 }
-                Std::insert(skylight_state_, name, max_duration_seconds);
+                Std::insert(skylight_state_, name, max_duration_seconds); // in this case is_initialized_internal_ will be set in beginFrame()
+            } else {
+                SP_LOG("    Marking world as initialized: ", name);
+                desc.is_initialized_internal_ = true;
             }
+        } else {
+                SP_LOG("    Marking world as initialized: ", name);
+            desc.is_initialized_internal_ = true;
         }
     }
 
@@ -220,7 +249,9 @@ private:
         Service::beginFrame();
 
         //
-        // Track how long we've been updating the skylight.
+        // Track how long we've been updating the skylight, and mark each world whose skylight update has
+        // finished as initialized. worldCleanupHandler(...) removes a world from world_descs_ and skylight_state_
+        // together, so every world in skylight_state_ is guaranteed to be in world_descs_.
         //
 
         if (!skylight_state_.empty()) {
@@ -234,12 +265,29 @@ private:
                 }
             }
 
+            bool log_current_function = false;
+
             for (const auto& name : completed) {
-                Std::remove(skylight_state_, name);
+                log_current_function = true;
             }
 
             if (skylight_state_.empty()) {
+                log_current_function = true;
+            }
+
+            if (log_current_function) {
                 SP_LOG_CURRENT_FUNCTION();
+            }
+
+            for (const auto& name : completed) {
+                Std::remove(skylight_state_, name);
+                SP_ASSERT(Std::containsKey(world_descs_, name));
+
+                SP_LOG("    Marking world as initialized: ", name);
+                world_descs_.at(name).is_initialized_internal_ = true;
+            }
+
+            if (skylight_state_.empty()) {
                 SP_LOG("    Restoring skylight updates...");
                 restoreSkylightCVar();
             }
@@ -251,20 +299,21 @@ private:
         IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
         SP_ASSERT(cvar);
         skylight_previous_cvar_value_ = cvar->GetInt();
-        cvar->Set(1);
+
         SP_LOG("    Old value of r.SkylightUpdateEveryFrame: ", skylight_previous_cvar_value_);
         SP_LOG("    New value of r.SkylightUpdateEveryFrame: 1");
+        cvar->Set(1);
     }
 
     void restoreSkylightCVar()
     {
         IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
         SP_ASSERT(cvar);
-        cvar->Set(skylight_previous_cvar_value_);
+
         SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", skylight_previous_cvar_value_);
+        cvar->Set(skylight_previous_cvar_value_);
     }
 
-    std::mutex mutex_;
     int64_t current_world_id_ = 1;
     std::map<std::string, SpWorldDesc> world_descs_;
 

@@ -1208,8 +1208,7 @@ class Client:
             world=self._to_return_value(return_value=return_value["world"], return_as="sp_handle"),
             world_id=return_value["world_id"],
             is_editor_world=return_value["is_editor_world"],
-            is_game_world=return_value["is_game_world"],
-            is_playing=return_value["is_playing"])
+            is_game_world=return_value["is_game_world"])
 
     def _to_str_return_value(self, return_value):
         if isinstance(return_value, bytes):
@@ -1370,13 +1369,12 @@ class SpStaticClassDesc(ClientStruct):
         return f"spear.SpStaticClassDesc(name='{self.name}', static_class={self.static_class.ptr:#x}, function_descs={len(self.function_descs)})"
 
 class SpWorldDesc(ClientStruct):
-    def __init__(self, world=None, world_id=-1, is_editor_world=False, is_game_world=False, is_playing=False):
+    def __init__(self, world=None, world_id=-1, is_editor_world=False, is_game_world=False):
         world = world if world is not None else SpHandle()
         self.world = world
         self.world_id = world_id
         self.is_editor_world = is_editor_world
         self.is_game_world = is_game_world
-        self.is_playing = is_playing
 
     def __repr__(self):
-        return f"spear.SpWorldDesc(world={self.world.ptr:#x}, world_id={self.world_id}, is_editor_world={self.is_editor_world}, is_game_world={self.is_game_world}, is_playing={self.is_playing})"
+        return f"spear.SpWorldDesc(world={self.world.ptr:#x}, world_id={self.world_id}, is_editor_world={self.is_editor_world}, is_game_world={self.is_game_world})"

@@ -221,9 +221,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
-    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
-    # 4 frames)
+    # waits for the engine to be completely idle and advances a minimum of 4 frames, recommended after spawning a camera sensor
     game.async_loading_service.wait_for_engine_idle()
 
     if len(camera_poses) == 0:
@@ -365,8 +363,6 @@ if __name__ == "__main__":
         save_images(camera_pose=previous_camera_pose, arrays=previous_arrays)
 
         end_time_seconds = time.time()
-
-    instance.step() # needed after the last call to instance.end_frame(single_step=True)
 
     if len(camera_poses) > 0:
         elapsed_time_seconds = end_time_seconds - start_time_seconds

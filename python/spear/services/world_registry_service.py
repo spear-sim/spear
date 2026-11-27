@@ -11,9 +11,12 @@ class WorldRegistryService(spear.Service):
         # do this after initializing local state
         super().__init__(entry_point_caller=entry_point_caller)
 
-    def get_world_descs(self):
-        return self.entry_point_caller.call_on_worker_thread("get_world_descs", None)
+    def register_worlds(self):
+        return self.entry_point_caller.call_on_game_thread("register_worlds", None)
 
-    def remove_world(self, world):
+    def unregister_world(self, world):
         world = spear.to_handle(obj=world)
-        return self.entry_point_caller.call_on_game_thread("remove_world", None, world)
+        return self.entry_point_caller.call_on_game_thread("unregister_world", None, world)
+
+    def get_world_descs(self):
+        return self.entry_point_caller.call_on_game_thread("get_world_descs", None)

@@ -181,10 +181,9 @@ if __name__ == "__main__":
     # unpause now that we're finished controlling the car
     with instance.begin_frame():
         game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
-    with instance.end_frame(single_step=True):
+    with instance.end_frame():
         pass
 
-    instance.step()
     instance.close()
 
     spear.log("Done.")

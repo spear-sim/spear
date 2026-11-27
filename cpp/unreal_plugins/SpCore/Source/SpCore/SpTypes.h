@@ -37,7 +37,7 @@
 //
 
 #if SP_PLATFORM_UNREAL || SP_PLATFORM_PURE
-    struct SpOutputLogMessages // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpOutputLogMessages
     {
         std::vector<std::string> messages_;
         int32_t num_evicted_ = 0;
@@ -49,7 +49,7 @@
 //
 
 #if SP_PLATFORM_UNREAL
-    struct SpSharedMemoryView // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpSharedMemoryView
     {
         std::string id_; // platform-dependent name used to access the shared memory resource from other processes
         uint64_t num_bytes_ = 0;
@@ -127,7 +127,7 @@
 //
 
 #if SP_PLATFORM_UNREAL
-    struct SpArraySharedMemoryView : SpSharedMemoryView // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpArraySharedMemoryView : SpSharedMemoryView
     {
         SpArraySharedMemoryView() = default;
         SpArraySharedMemoryView(const SpSharedMemoryView& view, const std::string& name, SpArraySharedMemoryUsageFlags usage_flags) : SpSharedMemoryView(view)
@@ -166,7 +166,7 @@
 #if SP_PLATFORM_UNREAL
     using SpPackedArrayAllocator = SpAlignedAllocator<uint8_t, 4096>;
 
-    class SPCORE_API SpPackedArray // exposed to Python via SpServices/MsgpackAdaptors.h
+    class SPCORE_API SpPackedArray
     {
     public:
         inline static constexpr int s_alignment_padding_bytes_ = 4096;
@@ -201,7 +201,7 @@
 //
 
 #if SP_PLATFORM_UNREAL
-    struct SpFuncDataBundle // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpFuncDataBundle
     {
         std::map<std::string, SpPackedArray> packed_arrays_;
         std::map<std::string, std::string> unreal_obj_strings_;
@@ -216,7 +216,7 @@
 //
 
 #if SP_PLATFORM_UNREAL || SP_PLATFORM_PURE
-    struct SpHandle // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpHandle
     {
         uint64_t ptr_ = 0;
         int32_t object_index_ = 0;
@@ -231,7 +231,7 @@
 //
 
 #if SP_PLATFORM_UNREAL
-    struct SpPropertyDesc // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpPropertyDesc
     {
         FProperty* property_ = nullptr; // leaf property, not always equal to the tail of notify_member_properties_ when property_ refers to a specific entry in an array or map
         void* value_ptr_ = nullptr;     // pointer to property_'s value for a specific object or struct
@@ -241,7 +241,7 @@
         // in the resolved traversal. notify_objects_ and notify_member_properties_ are always set, and the
         // remaining arrays describe an array or map entry at each step and are sentinels (nullptr, -1, "") for a
         // plain member step. The object to notify is notify_objects_.back().
-        std::vector<SpHandle> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed), SpHandle needed so SpPropertyDesc can be serialized safely on the worker thread
+        std::vector<SpHandle> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed)
         std::vector<FProperty*> notify_member_properties_;  // named member property at each step (i.e., the container for an array or map entry)
         std::vector<FProperty*> notify_element_properties_; // array Inner, fixed-size array property, or map ValueProp at each step, or nullptr for a plain member step
         std::vector<int> notify_array_indices_;             // array index at each step, or -1 for a non-array step
@@ -267,7 +267,7 @@
 #endif
 
 #if SP_PLATFORM_UNREAL || SP_PLATFORM_PURE
-    struct SpPropertyValue // exposed to Python via SpServices/MsgpackAdaptors.h
+    struct SpPropertyValue
     {
         std::string value_;
         std::string type_id_;

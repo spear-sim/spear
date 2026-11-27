@@ -74,7 +74,9 @@ class Service():
         return service
 
     def get_world(self):
-        return self.get_top_level_service()._world
+        world = self.get_top_level_service()._world
+        assert world is not None
+        return world
 
     def set_world(self, world):
         assert self.is_top_level_service()

@@ -31,7 +31,7 @@ public:
     RpcService()
     {
         SP_LOG_CURRENT_FUNCTION();
-        SP_LOG("    Creating RPC server...");
+        SP_LOG("Creating RPC server...");
 
         // Create RPC server, allocate port, but don't launch yet. We defer launching the server until the
         // first beginFrame() to give all other services a chance to bind their entry points. As long as all
@@ -58,7 +58,7 @@ public:
     ~RpcService() override
     {
         SP_LOG_CURRENT_FUNCTION();
-        SP_LOG("    Destroying RPC server...");
+        SP_LOG("Destroying RPC server...");
 
         SP_ASSERT(rpc_server_);
         rpc_server_->closeSessions();
@@ -78,7 +78,7 @@ protected:
         // Launch RPC server.
         if (!initialized_) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Launching RPC server...");
+            SP_LOG("Launching RPC server...");
             rpc_server_->asyncRun();
             initialized_ = true;
         }
@@ -94,9 +94,9 @@ private:
         // mark only that one close-on-exec.
         #if BOOST_OS_MACOS || BOOST_OS_LINUX
             long max_fd = sysconf(_SC_OPEN_MAX);
-            SP_LOG("    sysconf reports the maximum file descriptor ID is ", max_fd, ".");
+            SP_LOG("sysconf reports the maximum file descriptor ID is ", max_fd, ".");
             SP_ASSERT(max_fd > 0 && max_fd <= 2*1000*1000); // largest value observed on Linux was roughly 1,000,000
-            SP_LOG("    Attempting to find file descriptor that matches port ", port, ", searching IDs [3, ", max_fd, "]...");
+            SP_LOG("Attempting to find file descriptor that matches port ", port, ", searching IDs [3, ", max_fd, "]...");
 
             bool found = false;
             for (int fd = 3; fd < max_fd; fd++) {
@@ -112,15 +112,15 @@ private:
                 }
 
                 if (addr.sin_family == AF_INET && ntohs(addr.sin_port) == static_cast<uint16_t>(port)) {
-                    SP_LOG("    Found file descriptor ", fd, ".");
+                    SP_LOG("Found file descriptor ", fd, ".");
                     found = true;
 
                     int flags = fcntl(fd, F_GETFD);
                     if (flags != -1 && !(flags & FD_CLOEXEC)) {
-                        SP_LOG("    Setting FD_CLOEXEC flag on file descriptor ", fd, ".");
+                        SP_LOG("Setting FD_CLOEXEC flag on file descriptor ", fd, ".");
                         fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
                     } else {
-                        SP_LOG("    File descriptor ", fd, " already has FD_CLOEXEC flag set.");
+                        SP_LOG("File descriptor ", fd, " already has FD_CLOEXEC flag set.");
                     }
 
                     break; // found our listening socket; nothing else to check
@@ -128,7 +128,7 @@ private:
             }
 
             if (!found) {
-                SP_LOG("    Couldn't find file descriptor.");
+                SP_LOG("ERROR: Couldn't find file descriptor.");
                 SP_ASSERT(false);
             }
         #endif

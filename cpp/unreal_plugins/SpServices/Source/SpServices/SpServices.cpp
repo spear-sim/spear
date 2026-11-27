@@ -142,10 +142,22 @@ void SpServices::terminate()
         return;
     }
 
-    // The logic in EngineService guarantees that no other RPC server functions can ever get called after the
-    // engine_service.terminate entry point gets called, which should have already happened at this point. So
-    // it is ok to terminate our other services before terminating RpcService. This guarantee is necessary to
-    // enable other plugins to implement their own services.
+    // We call engine_service_->shutdown() before terminating RpcService, so any RPC handler that is waiting on
+    // one of EngineService's futures stops waiting. Terminating RpcService stops the RPC server and waits for
+    // any in-flight RPC handlers to finish executing, and it will not be possible to stop the RPC server
+    // gracefully if an RPC handler is waiting on a future that will never be ready. After RpcService has been
+    // terminated, there are no more RPC handlers that could access EngineService or our other services, so
+    // it is safe to terminate them. We terminate EngineService immediately after RpcService. Services are
+    // given a pointer to EngineService when they are constructed, but they are not allowed to cache it,
+    // because services in other modules (e.g., SpServicesEditor) might outlive EngineService.
+
+    SP_ASSERT(engine_service_);
+    engine_service_->shutdown();
+
+    SP_ASSERT(rpc_service_);
+    rpc_service_ = nullptr;
+
+    engine_service_ = nullptr;
 
     SP_ASSERT(sp_func_service_);
     SP_ASSERT(navigation_service_);
@@ -171,16 +183,6 @@ void SpServices::terminate()
 
     SP_ASSERT(initialize_engine_service_);
     initialize_engine_service_ = nullptr;
-
-    // We need to call engine_service_->shutdown() before shutting down the RPC server, so engine_service_
-    // has a chance to stop waiting on any futures that it might be waiting on. It will not be possible to
-    // shut down the RPC server gracefully if a live entry point is waiting on a future.
-    SP_ASSERT(engine_service_);
-    engine_service_->shutdown();
-    engine_service_ = nullptr;
-
-    SP_ASSERT(rpc_service_);
-    rpc_service_ = nullptr;
 
     initialized_ = false;
 }

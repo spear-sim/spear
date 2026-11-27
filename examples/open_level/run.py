@@ -37,22 +37,22 @@ if __name__ == "__main__":
     # Call OpenLevel. It is recommended to call OpenLevel() in a "with instance.end_frame()" block, rather
     # than in a "with instance.begin_frame()" block. Calling OpenLevel in a "with instance.begin_frame()"
     # does work, but it requires the user to set the SPEAR.CLIENT.INTERNAL_TIMEOUT_SECONDS config
-    # parameter conservatively due to various implementation details in begin_frame() and end_frame(). At the
-    # end of the frame block where you called OpenLevel(), it is required to call game.invalidate(),
-    # as we do here.
+    # parameter conservatively due to various implementation details in begin_frame() and end_frame(). It is
+    # required to call OpenLevel() inside a "with game.invalidate()" block, as we do here, and OpenLevel()
+    # must be the last call inside the block.
 
     spear.log("Opening level: /Game/ThirdPerson/Maps/ThirdPersonMap")
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        game.invalidate() # need to call invalidate() before calling OpenLevel()
-        game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/ThirdPerson/Maps/ThirdPersonMap", bAbsolute=True, Options="")
+        with game.invalidate():
+            game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/ThirdPerson/Maps/ThirdPersonMap", bAbsolute=True, Options="")
 
-    # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
-    # the new game object is ready.
+    # Calling OpenLevel destroys the old game world, so get the game object again here to bind it to the new
+    # game world. This call will block until the new game world is ready.
     game = instance.get_game(
-        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0,
-        warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
+        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0)
+    instance.warm_up(time_seconds=5.0)
 
     if is_with_editor:
         with instance.begin_frame():
@@ -80,13 +80,13 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        game.invalidate() # need to call invalidate() before calling OpenLevel()
-        game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", bAbsolute=True, Options="")
+        with game.invalidate():
+            game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", bAbsolute=True, Options="")
 
-    # get a new game object again
+    # get the game object again
     game = instance.get_game(
-        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0,
-        warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
+        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0)
+    instance.warm_up(time_seconds=5.0)
 
     if is_with_editor:
         with instance.begin_frame():

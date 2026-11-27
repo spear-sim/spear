@@ -164,9 +164,9 @@ class RenderingQualityService(spear.Service):
         # r.HLOD is compiled out of Shipping builds, so we skip it in Shipping builds.
         if disable_hlods:
             if self._engine_globals_service.get_ue_build() == "shipping":
-                spear.log("    Skipping console command because it is unavailable in Shipping builds: r.HLOD 0")
+                spear.log("Skipping console command because it is unavailable in Shipping builds: r.HLOD 0")
             else:
-                spear.log("    Executing console command: r.HLOD 0")
+                spear.log("Executing console command: r.HLOD 0")
                 self._console_service.execute_command(command="r.HLOD 0")
 
         self._restore_stack.append({
@@ -199,9 +199,9 @@ class RenderingQualityService(spear.Service):
 
         if enable_hlods:
             if self._engine_globals_service.get_ue_build() == "shipping":
-                spear.log("    Skipping console command because it is unavailable in Shipping builds: r.HLOD 1")
+                spear.log("Skipping console command because it is unavailable in Shipping builds: r.HLOD 1")
             else:
-                spear.log("    Executing console command: r.HLOD 1")
+                spear.log("Executing console command: r.HLOD 1")
                 self._console_service.execute_command(command="r.HLOD 1")
 
         for cvar_desc in restore_data["cvar_descs"]:

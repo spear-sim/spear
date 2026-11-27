@@ -21,8 +21,8 @@ class Client():
 
     def initialize(self, launcher):
 
-        spear.log_current_function(prefix="    ")
-        spear.log("        Initializing client...")
+        spear.log_current_function()
+        spear.log("Initializing client...")
 
         connected = False
 
@@ -33,7 +33,7 @@ class Client():
             try:
                 # Once a connection has been established, the client will wait for timeout seconds before
                 # throwing when calling a server function.
-                spear.log("        Attempting to connect to server...")
+                spear.log("Attempting to connect to server...")
                 if spear.__can_import_spear_ext__:
                     self.client = spear_ext.Client(self._config.SPEAR.CLIENT.RPC_SERVER_ADDRESS, self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.CLIENT.SUPPRESS_DEFAULT_LOGGING)
                     self.client.set_timeout(int(self._config.SPEAR.CLIENT.INTERNAL_TIMEOUT_SECONDS)*1000)
@@ -47,8 +47,8 @@ class Client():
                     assert False
                 connected = self.client.ping() == "ping"
             except Exception as e:
-                spear.log("        Exception: ", e)
-                self.terminate(log_prefix="        ")
+                spear.log("Exception: ", e)
+                self.terminate()
                 assert False
 
         # Otherwise try to connect repeatedly, since the server might not have started yet.
@@ -66,13 +66,13 @@ class Client():
 
                 status = launcher.process.status()
                 if status not in spear.Launcher.expected_process_status_values:
-                    spear.log("        ERROR: Unrecognized process status: ", status)
+                    spear.log("ERROR: Unrecognized process status: ", status)
                     break
 
                 try:
                     # Once a connection has been established, the client will wait for timeout seconds before
                     # throwing when calling a server function.
-                    spear.log("        Attempting to connect to server...")
+                    spear.log("Attempting to connect to server...")
                     self.client = spear_ext.Client(self._config.SPEAR.CLIENT.RPC_SERVER_ADDRESS, self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.CLIENT.SUPPRESS_DEFAULT_LOGGING)
                     self.client.set_timeout(int(self._config.SPEAR.CLIENT.INTERNAL_TIMEOUT_SECONDS)*1000)
                     connected = self.client.ping() == "ping"
@@ -82,12 +82,12 @@ class Client():
                     # There is no need to log the exception because this case is expected until we can
                     # successfully connect to the server, which is why we set verbose=False when terminating
                     # the client.
-                    self._terminate_client(verbose=False)
+                    self.terminate(verbose=False)
 
                 except Exception as e:
-                    spear.log("        Exception: ", e)
-                    self.terminate(log_prefix="        ")
-                    launcher.kill(log_prefix="        ")
+                    spear.log("Exception: ", e)
+                    self.terminate()
+                    launcher.kill()
                     assert False
 
                 time.sleep(self._config.SPEAR.CLIENT.INITIALIZE_SLEEP_TIME_SECONDS)
@@ -97,36 +97,37 @@ class Client():
             assert False
 
         if connected:
-            spear.log("        Connected to server.")
+            spear.log("Connected to server.")
         else:
-            spear.log("        ERROR: Couldn't connect to RPC server, giving up...")
-            self.terminate(log_prefix="        ")
+            spear.log("ERROR: Couldn't connect to RPC server, giving up...")
+            self.terminate()
             if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-                launcher.kill(log_prefix="        ")
+                launcher.kill()
             assert False
 
-        self.client.initialize() # EngineService hasn't been initialized yet
+        # spear.editor.Client doesn't have a watchdog
+        if spear.__can_import_spear_ext__:
+            self.client.set_watchdog_sleep_time_seconds(self._config.SPEAR.CLIENT.WATCHDOG_SLEEP_TIME_SECONDS)
+            self.client.set_watchdog_max_time_seconds(self._config.SPEAR.CLIENT.WATCHDOG_MAX_TIME_SECONDS)
+
+        self.client.initialize()
 
         self.client.force_return_aligned_arrays = self._config.SPEAR.CLIENT.FORCE_RETURN_ALIGNED_ARRAYS
-        self.client.suppress_default_logging = self._config.SPEAR.CLIENT.SUPPRESS_DEFAULT_LOGGING
         self.client.verbose_rpc_calls = self._config.SPEAR.CLIENT.VERBOSE_RPC_CALLS
         self.client.verbose_allocations = self._config.SPEAR.CLIENT.VERBOSE_ALLOCATIONS
         self.client.verbose_exceptions = self._config.SPEAR.CLIENT.VERBOSE_EXCEPTIONS
 
-        spear.log("        Finished initializing client.")
+        spear.log("Finished initializing client.")
 
-    def terminate(self, log_prefix=""):
-        self._terminate_client(verbose=True, log_prefix=log_prefix)
-
-    def _terminate_client(self, verbose, log_prefix=""):
+    def terminate(self, verbose=True):
         if verbose:
-            spear.log_current_function(prefix=log_prefix)
-            spear.log(f"{log_prefix}    Terminating client: {self.client}")
+            spear.log_current_function()
+            spear.log(f"Terminating client...")
         if self.client is not None:
             self.client.terminate()
             self.client = None
         if verbose:
-            spear.log(f"{log_prefix}    Finished terminating client.")
+            spear.log("Finished terminating client.")
 
     def __repr__(self):
         return f"Client(client={self.client})"

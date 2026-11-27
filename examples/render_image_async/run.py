@@ -88,9 +88,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
-    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
-    # 4 frames)
+    # waits for the engine to be completely idle and advances a minimum of 4 frames, recommended after spawning a camera sensor
     game.async_loading_service.wait_for_engine_idle()
 
     # get rendered frame
@@ -304,7 +302,7 @@ if __name__ == "__main__":
                 with instance.end_frame(single_step=True):
                     data_bundle = future.get()
         end_time_seconds = time.time()
-        instance.step() # needed after the last call to instance.end_frame(single_step=True)
+        instance.step() # needed to get out of single_step=True mode
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 

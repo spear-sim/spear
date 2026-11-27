@@ -285,10 +285,13 @@ void USpSceneCaptureComponent2D::Initialize()
     if (BufferingMode == ESpBufferingMode::SingleBuffered || BufferingMode == ESpBufferingMode::DoubleBuffered) {
         texture_readback_desc_.rhi_gpu_texture_readbacks_ = {
             std::make_unique<FRHIGPUTextureReadback>(Unreal::createFName("rhi_gpu_texture_readback_A")), nullptr};
+        SP_ASSERT(texture_readback_desc_.rhi_gpu_texture_readbacks_.at(0));
     } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
         texture_readback_desc_.rhi_gpu_texture_readbacks_ = {
             std::make_unique<FRHIGPUTextureReadback>(Unreal::createFName("rhi_gpu_texture_readback_A")),
             std::make_unique<FRHIGPUTextureReadback>(Unreal::createFName("rhi_gpu_texture_readback_B")) };
+        SP_ASSERT(texture_readback_desc_.rhi_gpu_texture_readbacks_.at(0));
+        SP_ASSERT(texture_readback_desc_.rhi_gpu_texture_readbacks_.at(1));
     }
 
     //
@@ -341,10 +344,13 @@ void USpSceneCaptureComponent2D::Initialize()
         if (BufferingMode == ESpBufferingMode::SingleBuffered || BufferingMode == ESpBufferingMode::DoubleBuffered) {
             texture_readback_desc.rhi_gpu_texture_readbacks_ = {
                 std::make_unique<FRHIGPUTextureReadback>(Unreal::createFName("rhi_gpu_texture_readback_A_" + name_string)), nullptr};
+            SP_ASSERT(texture_readback_desc.rhi_gpu_texture_readbacks_.at(0));
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
             texture_readback_desc.rhi_gpu_texture_readbacks_ = {
                 std::make_unique<FRHIGPUTextureReadback>(Unreal::createFName("rhi_gpu_texture_readback_A_" + name_string)),
                 std::make_unique<FRHIGPUTextureReadback>(Unreal::createFName("rhi_gpu_texture_readback_B_" + name_string)) };
+            SP_ASSERT(texture_readback_desc.rhi_gpu_texture_readbacks_.at(0));
+            SP_ASSERT(texture_readback_desc.rhi_gpu_texture_readbacks_.at(1));
         }
     }
 
