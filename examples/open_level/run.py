@@ -50,9 +50,7 @@ if __name__ == "__main__":
 
     # Calling OpenLevel destroys the old game world, so get the game object again here to bind it to the new
     # game world. This call will block until the new game world is ready.
-    game = instance.get_game(
-        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0)
-    instance.warm_up(time_seconds=5.0)
+    game = instance.get_game(wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0)
 
     if is_with_editor:
         with instance.begin_frame():
@@ -65,6 +63,10 @@ if __name__ == "__main__":
             pass
 
     with instance.begin_frame():
+
+        # unpause the game
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
+
         # spawn object
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
@@ -84,8 +86,7 @@ if __name__ == "__main__":
             game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", bAbsolute=True, Options="")
 
     # get the game object again
-    game = instance.get_game(
-        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0)
+    game = instance.get_game(wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0)
     instance.warm_up(time_seconds=5.0)
 
     if is_with_editor:

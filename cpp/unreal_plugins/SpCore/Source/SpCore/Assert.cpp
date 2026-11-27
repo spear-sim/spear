@@ -4,11 +4,11 @@
 // Copyright (c) 2004 Gregory Pakosz. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
 
+// Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
+
 //
 // This implementation participates in SP_PLATFORM_PURE builds.
 //
-
-// Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
 #include "SpCore/Assert.h"
 
@@ -16,6 +16,7 @@
 
 #include <stddef.h> // size_t
 
+#include <atomic>
 #include <cstdlib> // std::abort, std::exit
 #include <limits>  // std::numeric_limits
 #include <mutex>   // std::lock_guard, std::recursive_mutex
@@ -313,13 +314,13 @@ namespace {
     AssertAction::AssertAction default_assert_action = AssertAction::None;
     #if SP_PLATFORM_UNREAL
       if (boost::debug::under_debugger()) {
-        if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+        if (AssertsAreAllowedToThrowScope::isThisThreadAllowedToThrow()) {
           default_assert_action = AssertAction::BreakThenThrow;
         } else {
           default_assert_action = AssertAction::Break;
         }
       } else {
-        if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+        if (AssertsAreAllowedToThrowScope::isThisThreadAllowedToThrow()) {
           default_assert_action = AssertAction::Throw;
         } else {
           #if WITH_EDITOR // defined in an auto-generated header
@@ -387,8 +388,22 @@ namespace {
 
         fflush(stdout);
 
+        // ---- BEGIN SPEAR MODIFICATION ----
+
+        // char buffer[256];
+        // if (!fgets(buffer, sizeof(buffer), stdin))
+
+        // Announce that we're waiting for user input, so other systems don't treat this as a stall.
         char buffer[256];
-        if (!fgets(buffer, sizeof(buffer), stdin))
+        char* fgets_result = nullptr;
+        {
+            AssertWaitingForUserInputScope assert_waiting_for_user_input_scope;
+            fgets_result = fgets(buffer, sizeof(buffer), stdin);
+        }
+
+        // ---- END SPEAR MODIFICATION ----
+
+        if (!fgets_result)
         {
           clearerr(stdin);
           fprintf(stdout, "\n");
@@ -930,19 +945,47 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 // ---- BEGIN SPEAR MODIFICATION ----
 
+// Thread-local, because the thread that triggers an assert is asking whether it is inside a protected try-catch block,
+// and another thread's AssertsAreAllowedToThrowScope must not make this thread's asserts throw. Defined here rather
+// than as a static member variable in Assert.h, so there is exactly one depth counter per thread for the entire
+// process, rather than one per module that includes Assert.h.
+static thread_local int asserts_are_allowed_to_throw_scope_depth = 0;
+
 AssertsAreAllowedToThrowScope::AssertsAreAllowedToThrowScope()
 {
-    depth_++;
+    asserts_are_allowed_to_throw_scope_depth++;
 }
 
 AssertsAreAllowedToThrowScope::~AssertsAreAllowedToThrowScope()
 {
-    depth_--;
+    asserts_are_allowed_to_throw_scope_depth--;
 }
 
-bool AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()
+bool AssertsAreAllowedToThrowScope::isThisThreadAllowedToThrow()
 {
-    return depth_ > 0;
+    return asserts_are_allowed_to_throw_scope_depth > 0;
+}
+
+// Process-wide rather than thread-local, because the thread that checks it (e.g., the watchdog thread in EngineService)
+// is asking whether some other thread is waiting for user input, so a thread-local counter would always read 0 from
+// the watchdog thread. Atomic, because multiple threads can read and write it concurrently. Defined here rather than
+// as a static member variable in Assert.h, so there is exactly one counter for the entire process, rather than one
+// per module that includes Assert.h.
+static std::atomic<int> num_threads_waiting_for_user_input = 0;
+
+AssertWaitingForUserInputScope::AssertWaitingForUserInputScope()
+{
+    num_threads_waiting_for_user_input++;
+}
+
+AssertWaitingForUserInputScope::~AssertWaitingForUserInputScope()
+{
+    num_threads_waiting_for_user_input--;
+}
+
+bool AssertWaitingForUserInputScope::isAnyThreadWaitingForUserInput()
+{
+    return num_threads_waiting_for_user_input > 0;
 }
 
 // ---- END SPEAR MODIFICATION ----

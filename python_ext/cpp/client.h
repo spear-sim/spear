@@ -64,6 +64,13 @@ public:
         return client_->call("engine_globals_service.call_sync_on_worker_thread.ping").get().as<std::string>();
     }
 
+    int64_t getCurrentProcessId()
+    {
+        if (!suppress_default_logging_) { SP_LOG_CURRENT_FUNCTION(); }
+        SP_ASSERT(client_);
+        return client_->call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id").get().as<int64_t>();
+    }
+
     void initialize()
     {
         if (!suppress_default_logging_) { SP_LOG_CURRENT_FUNCTION(); }

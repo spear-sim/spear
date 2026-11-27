@@ -4,11 +4,11 @@
 // Copyright (c) 2004 Gregory Pakosz. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
 
+// Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
+
 //
 // This header participates in SP_PLATFORM_PURE builds.
 //
-
-// Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
 #pragma once
 
@@ -738,21 +738,34 @@
 // ---- BEGIN SPEAR MODIFICATION ----
 
 //
-// Some call sites (e.g., EngineService::executeFuncInTryCatch(...)) are wrapped in a try-catch block
-// specifically designed to recover gracefully from an assert-triggered throw, converting it into an error
-// response rather than letting it propagate uncaught. But most SP_ASSERT call sites have no way of knowing,
-// locally, whether they happen to be executing inside one of these protected regions. Constructing an
-// AssertsAreAllowedToThrowScope as the first statement inside such a try block lets it announce that it is
-// currently active, for as long as the object stays in scope. Note that this class is intentionally not
-// marked SPCORE_API. Doing so would mark the thread_local variable, and that is not allowed on Windows.
+// Some call sites (e.g., EngineService::executeFuncInTryCatch(...)) are wrapped in a try-catch block specifically
+// designed to recover gracefully from an assert-triggered throw, converting it into an error response rather than
+// letting it propagate uncaught. But most SP_ASSERT call sites have no way of knowing, locally, whether they happen to
+// be executing inside one of these protected regions. Constructing an AssertsAreAllowedToThrowScope as the first
+// statement inside such a try block lets it announce that it is currently active, for as long as the object stays in
+// scope. The underlying depth counter is thread-local, because an assert is only allowed to throw if the thread that
+// triggered it is inside one of these protected regions.
 class AssertsAreAllowedToThrowScope
 {
 public:
     SPCORE_API AssertsAreAllowedToThrowScope();
     SPCORE_API ~AssertsAreAllowedToThrowScope();
-    static SPCORE_API bool insideAssertsAreAllowedToThrowScope();
-private:
-    inline static thread_local int depth_ = 0;
+    static SPCORE_API bool isThisThreadAllowedToThrow();
+};
+
+//
+// The assert handler can block indefinitely while it waits for the user to respond to an interactive prompt. Other
+// systems that detect stalls (e.g., the watchdog thread in EngineService) can call isAnyThreadWaitingForUserInput() to
+// avoid treating this as a stall. The assert handler constructs an AssertWaitingForUserInputScope while it is waiting
+// for user input. The underlying counter is process-wide rather than thread-local, because the thread that checks it
+// (e.g., the watchdog thread) is different from the thread that is waiting for user input. It is a counter rather than
+// a bool, because multiple threads can be waiting for user input at the same time.
+class AssertWaitingForUserInputScope
+{
+public:
+    SPCORE_API AssertWaitingForUserInputScope();
+    SPCORE_API ~AssertWaitingForUserInputScope();
+    static SPCORE_API bool isAnyThreadWaitingForUserInput();
 };
 
 #define SP_ASSERT PPK_ASSERT

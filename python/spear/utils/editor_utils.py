@@ -1003,6 +1003,10 @@ class Client:
         result = self._client.call("engine_globals_service.call_sync_on_worker_thread.ping")
         return self._to_return_value(return_value=result, return_as="string")
 
+    def get_current_process_id(self):
+        result = self._client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id")
+        return self._to_return_value(return_value=result, return_as="int64")
+
     def is_server_local(self):
         return True
 

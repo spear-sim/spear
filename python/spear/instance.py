@@ -758,6 +758,7 @@ class Instance():
             self._launcher.kill()
 
         else:
+
             # terminate EngineService
             if self._config.SPEAR.LAUNCH_MODE == "none":
                 pass

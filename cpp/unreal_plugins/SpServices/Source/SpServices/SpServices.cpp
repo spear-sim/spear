@@ -142,14 +142,16 @@ void SpServices::terminate()
         return;
     }
 
-    // We call engine_service_->shutdown() before terminating RpcService, so any RPC handler that is waiting on
-    // one of EngineService's futures stops waiting. Terminating RpcService stops the RPC server and waits for
-    // any in-flight RPC handlers to finish executing, and it will not be possible to stop the RPC server
-    // gracefully if an RPC handler is waiting on a future that will never be ready. After RpcService has been
-    // terminated, there are no more RPC handlers that could access EngineService or our other services, so
-    // it is safe to terminate them. We terminate EngineService immediately after RpcService. Services are
-    // given a pointer to EngineService when they are constructed, but they are not allowed to cache it,
-    // because services in other modules (e.g., SpServicesEditor) might outlive EngineService.
+    // Terminating RpcService (i.e., setting it to nullptr) stops the RPC server and waits for any in-flight RPC
+    // handlers to finish executing. But if an RPC handler is waiting on a future that will never be ready, then it is
+    // not possible to stop the RPC server gracefully. To avoid this situation, we call engine_service_->shutdown()
+    // before terminating RpcService, which ensures that any RPC handler that is waiting on one of EngineService's
+    // futures stops waiting.
+    //
+    // After RpcService has been terminated, there are no more RPC handlers that could access EngineService or our other
+    // services, so it is safe to terminate them. We terminate EngineService immediately after RpcService. Services are
+    // given a pointer to EngineService when they are constructed, but they are not allowed to cache it, because
+    // services in other modules (e.g., SpServicesEditor) might outlive EngineService.
 
     SP_ASSERT(engine_service_);
     engine_service_->shutdown();

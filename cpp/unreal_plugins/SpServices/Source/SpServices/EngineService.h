@@ -337,12 +337,8 @@ public:
                 // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                 std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
 
-                resetBatchedWorkQueueReadyPromise(begin_frame_writable_by_wt_);
-
                 // Signal to the game thread that we will be queuing additional BeginFrame work.
-                SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
-                SP_ASSERT(batched_work_queue_fifo_.empty() || batched_work_queue_fifo_.back().second == BatchedQueueType::EndFrame);
-                batched_work_queue_fifo_.push_back(std::make_pair(begin_frame_writable_by_wt_, BatchedQueueType::BeginFrame));
+                pushBatchedWorkQueue(begin_frame_writable_by_wt_, BatchedQueueType::BeginFrame);
             }
 
             // Push current work queue.
@@ -377,12 +373,8 @@ public:
                 // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                 std::swap(end_frame_being_drained_by_gt_, end_frame_writable_by_wt_);
 
-                resetBatchedWorkQueueReadyPromise(end_frame_writable_by_wt_);
-
                 // Signal to the game thread that we will be queuing additional EndFrame work.
-                SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
-                SP_ASSERT(batched_work_queue_fifo_.empty() || batched_work_queue_fifo_.back().second == BatchedQueueType::BeginFrame);
-                batched_work_queue_fifo_.push_back(std::make_pair(end_frame_writable_by_wt_, BatchedQueueType::EndFrame));
+                pushBatchedWorkQueue(end_frame_writable_by_wt_, BatchedQueueType::EndFrame);
             }
 
             // Update current work queue.
@@ -446,11 +438,7 @@ public:
                     // and future if we push the queue to the FIFO, because otherwise the game thread will never
                     // set the promise, and releaseGameThread() would wait on the future forever.
                     if (request_begin_frame) {
-                        resetBatchedWorkQueueReadyPromise(begin_frame_writable_by_wt_);
-
-                        SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
-                        SP_ASSERT(batched_work_queue_fifo_.empty() || batched_work_queue_fifo_.back().second == BatchedQueueType::EndFrame);
-                        batched_work_queue_fifo_.push_back(std::make_pair(begin_frame_writable_by_wt_, BatchedQueueType::BeginFrame));
+                        pushBatchedWorkQueue(begin_frame_writable_by_wt_, BatchedQueueType::BeginFrame);
                     }
                 }
 
@@ -615,6 +603,8 @@ public:
 
     void startup()
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         if (Config::isInitialized()) {
             watchdog_sleep_time_seconds_ = Config::get<double>("SP_SERVICES.ENGINE_SERVICE.WATCHDOG_SLEEP_TIME_SECONDS");
             watchdog_max_time_seconds_ = Config::get<double>("SP_SERVICES.ENGINE_SERVICE.WATCHDOG_MAX_TIME_SECONDS");
@@ -626,6 +616,8 @@ public:
 
     void shutdown()
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         // Request the watchdog thread to stop, and wake it up so it stops immediately rather than after its
         // current sleep time.
 
@@ -651,7 +643,7 @@ public:
         // Release any RPC handler that is waiting in engine_service.begin_frame, engine_service.execute_frame,
         // or engine_service.end_frame. We set shutdown_ while holding both lifecycle_mutex_ and
         // batched_work_queue_mutex_, so it can be read while holding either one (see engine_service.initialize
-        // and resetBatchedWorkQueueReadyPromise(...)).
+        // and pushBatchedWorkQueue(...)).
 
         {
             std::lock_guard lock(batched_work_queue_mutex_);
@@ -1119,22 +1111,30 @@ private:
 
     // Called from the worker thread in engine_service.begin_frame, engine_service.execute_frame, and
     // engine_service.end_frame (if in single-step mode) while holding batched_work_queue_mutex_, to create a new
-    // promise and future for a queue that is about to be pushed to the FIFO. If shutdown() has already been
-    // called, the game thread will never set the new promise, so we set it immediately. Otherwise, a subsequent
-    // call to releaseGameThread() would wait on the corresponding future forever. shutdown() sets shutdown_ while
-    // holding batched_work_queue_mutex_, so either we create the promise before shutdown() sets the unset
-    // promises, or we observe that shutdown_ is true here.
+    // promise and future for a queue and push the queue to the FIFO. If shutdown() has already been called, the
+    // game thread will never drain the FIFO or set the new promise, so we set the promise immediately and don't
+    // push the queue. Otherwise, a subsequent call to releaseGameThread() would wait on the corresponding future
+    // forever, and the FIFO might overflow, e.g., if the engine exited before the game thread drained the queues
+    // for the previous frame. shutdown() sets shutdown_ while holding batched_work_queue_mutex_, so either we
+    // push the queue before shutdown() sets the unset promises, or we observe that shutdown_ is true here.
 
-    void resetBatchedWorkQueueReadyPromise(int queue_id)
+    void pushBatchedWorkQueue(int queue_id, BatchedQueueType queue_type)
     {
         batched_work_queue_ready_promises_.at(queue_id) = std::promise<void>();
         batched_work_queue_ready_futures_.at(queue_id) = batched_work_queue_ready_promises_.at(queue_id).get_future();
-        batched_work_queue_ready_promises_set_.at(queue_id) = false;
 
         if (shutdown_) {
+            SP_LOG("worker_thread: ERROR: Attempting to push batched work queue ", queue_id, " after EngineService::shutdown(), returning without pushing...");
             batched_work_queue_ready_promises_.at(queue_id).set_value();
             batched_work_queue_ready_promises_set_.at(queue_id) = true;
+            return;
         }
+
+        batched_work_queue_ready_promises_set_.at(queue_id) = false;
+
+        SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
+        SP_ASSERT(batched_work_queue_fifo_.empty() || batched_work_queue_fifo_.back().second != queue_type);
+        batched_work_queue_fifo_.push_back(std::make_pair(queue_id, queue_type));
     }
 
     // Called from the worker thread at the start of engine_service.initialize and engine_service.terminate, so it's
@@ -1153,6 +1153,8 @@ private:
 
     void releaseGameThread()
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         request_error_ = true;
 
         std::vector<int> unready_queue_ids;
@@ -1166,12 +1168,16 @@ private:
         }
 
         for (int i : unready_queue_ids) {
+            SP_LOG("worker_thread: Releasing game thread, scheduling reset on work queue ", batched_work_queues_.at(i).getName(), "...");
             std::string func_name = "engine_service.release_game_thread." + batched_work_queues_.at(i).getName() + ".reset";
             batched_work_queues_.at(i).scheduleReset(func_name);
+            SP_LOG("worker_thread: Releasing game thread, finished scheduling reset on work queue ", batched_work_queues_.at(i).getName(), ".");
         }
 
         for (int i : unready_queue_ids) {
+            SP_LOG("worker_thread: Releasing game thread, waiting for work queue ", batched_work_queues_.at(i).getName(), " to be ready...");
             batched_work_queue_ready_futures_.at(i).wait();
+            SP_LOG("worker_thread: Releasing game thread, finished waiting for work queue ", batched_work_queues_.at(i).getName(), ".");
         }
     }
 
@@ -1270,6 +1276,14 @@ private:
         while (!watchdog_condition_variable_.wait_for(watchdog_lock, sleep_time, [this]() -> bool { return watchdog_stop_requested_; })) {
             std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex_);
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+
+            // If any thread is waiting for the user to respond to an interactive assert prompt, then the game
+            // thread might be waiting for work that will arrive once the user responds, so we don't treat this as
+            // a stall. We restart the timeout for every queue, so the user's response time doesn't count.
+            if (AssertWaitingForUserInputScope::isAnyThreadWaitingForUserInput()) {
+                last_idle_id_change_times.fill(now);
+                continue;
+            }
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 uint64_t idle_id = batched_work_queues_.at(i).getIdleId();
                 if (idle_id != last_idle_ids.at(i)) {
@@ -1390,7 +1404,7 @@ private:
     // work queues, and by the watchdog thread while it checks and resets the batched work queues. shutdown_ is
     // set to true by the game thread in shutdown() while holding both lifecycle_mutex_ and
     // batched_work_queue_mutex_. It is read by the worker thread in engine_service.initialize while holding
-    // lifecycle_mutex_, and in resetBatchedWorkQueueReadyPromise(...) while holding batched_work_queue_mutex_.
+    // lifecycle_mutex_, and in pushBatchedWorkQueue(...) while holding batched_work_queue_mutex_.
     std::mutex lifecycle_mutex_;
     bool shutdown_ = false;
 

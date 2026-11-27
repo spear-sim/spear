@@ -30,10 +30,11 @@ NB_MODULE(spear_ext, module)
 
     client_class.def(nanobind::init<const std::string&, const uint16_t, bool>());
 
-    client_class.def("ping",         &Client::ping);
-    client_class.def("initialize",   &Client::initialize);
-    client_class.def("request_exit", &Client::requestExit);
-    client_class.def("terminate",    &Client::terminate);
+    client_class.def("ping",                   &Client::ping);
+    client_class.def("get_current_process_id", &Client::getCurrentProcessId);
+    client_class.def("initialize",             &Client::initialize);
+    client_class.def("request_exit",           &Client::requestExit);
+    client_class.def("terminate",              &Client::terminate);
 
     client_class.def("call", &Client::call);
 

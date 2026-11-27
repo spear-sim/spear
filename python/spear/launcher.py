@@ -176,7 +176,7 @@ class Launcher():
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
             # EngineService hasn't been initialized yet, so we call get_current_process_id directly through the inner client
-            pid = client.client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id")
+            pid = client.client.get_current_process_id()
 
             if pid == self.process.pid:
                 spear.log("Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
