@@ -3,10 +3,6 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import glob
-import json
-import os
-import pathlib
 import spear
 
 
@@ -107,94 +103,3 @@ def to_spear_transform_from_json_component(json_component):
 
 def to_spear_vector_from_json_vector(json_vector):
     return {"X": json_vector["editor_properties"]["x"], "Y": json_vector["editor_properties"]["y"], "Z": json_vector["editor_properties"]["z"]}
-
-
-#
-# Functions for getting a physical filesystem path from a logical content path.
-#
-
-def get_plugin_dirs(unreal_project_dir=None, unreal_engine_dir=None, follow_symlinks=False):
-
-    assert unreal_engine_dir is not None
-    assert unreal_project_dir is not None
-
-    if follow_symlinks:
-        path_func = spear.path.realpath
-    else:
-        path_func = lambda path: path
-
-    plugins_dirs = [
-        os.path.join(unreal_project_dir, "Plugins"),
-        os.path.join(unreal_engine_dir, "Engine", "Plugins")]
-
-    uprojects = glob.glob(path_func(os.path.join(unreal_project_dir, "*.uproject")))
-    assert len(uprojects) == 1
-    uproject = uprojects[0]
-    with open(uproject) as f:
-        uproject_dict = json.load(f)
-    if "AdditionalPluginDirectories" in uproject_dict:
-        for additional_plugins_dir in uproject_dict["AdditionalPluginDirectories"]:
-            if os.path.isabs(additional_plugins_dir):
-                plugins_dirs.append(path_func(additional_plugins_dir))
-            else:
-                plugins_dirs.append(path_func(os.path.join(unreal_project_dir, additional_plugins_dir)))
-
-    # Unreal names a plugin after its .uplugin file, not after the directory containing it, and plugins can be
-    # nested arbitrarily deeply inside a plugins directory (e.g., Engine/Plugins/Runtime), so we search
-    # recursively for .uplugin files.
-    plugin_dirs = {}
-    for plugins_dir in plugins_dirs:
-        for uplugin in glob.glob(path_func(os.path.join(plugins_dir, "**", "*.uplugin")), recursive=True):
-            plugin_name = os.path.splitext(os.path.basename(uplugin))[0]
-            assert plugin_name not in plugin_dirs
-            plugin_dirs[plugin_name] = path_func(os.path.dirname(uplugin))
-
-    return plugin_dirs
-
-def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None, unreal_engine_dir=None, plugin_dirs=None, follow_symlinks=False):
-
-    if follow_symlinks:
-        path_func = spear.path.realpath
-    else:
-        path_func = lambda path: path
-
-    content_path_tokens = pathlib.PurePosixPath(content_path).parts
-    assert len(content_path_tokens) >= 2
-    content_root = content_path_tokens[1]
-
-    if content_root == "Game":
-        assert unreal_project_dir is not None
-        filesystem_base_dir = os.path.join(unreal_project_dir, "Content")
-
-    elif content_root == "Engine":
-        assert unreal_engine_dir is not None
-        filesystem_base_dir = os.path.join(unreal_engine_dir, "Engine", "Content")
-
-    else:
-        assert plugin_dirs is not None
-        assert content_root in plugin_dirs
-        filesystem_base_dir = path_func(os.path.join(plugin_dirs[content_root], "Content"))
-
-    # try to follow Unreal's rules for resolving asset paths
-
-    if len(content_path_tokens) == 2:
-        return filesystem_base_dir
-    else:
-        content_sub_path = os.path.join(*content_path_tokens[2:])
-        filesystem_path = path_func(os.path.join(filesystem_base_dir, content_sub_path))
-        if os.path.exists(filesystem_path) and os.path.isdir(filesystem_path):
-            return filesystem_path
-        elif os.path.islink(filesystem_path) and os.path.exists(spear.path.realpath(filesystem_path)):
-            return filesystem_path
-        else:
-            content_file_tokens = content_path_tokens[-1].split(".")
-            if len(content_file_tokens) in [1, 2]:
-                if len(content_file_tokens) == 2:
-                    assert content_file_tokens[0] == content_file_tokens[1]
-                filesystem_paths = glob.glob(path_func(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], f"{content_file_tokens[0]}.*")))
-                if len(filesystem_paths) == 1:
-                    return filesystem_paths[0]
-                else:
-                    return path_func(os.path.join(filesystem_base_dir, *content_path_tokens[2:]))
-            else:
-                assert False

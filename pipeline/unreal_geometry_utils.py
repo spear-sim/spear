@@ -19,6 +19,7 @@ import trimesh
 
 scene_component_classes = ["SceneComponent", "StaticMeshComponent"]
 static_mesh_component_classes = ["StaticMeshComponent"]
+physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 
 
 #
@@ -103,10 +104,10 @@ def get_bounding_box(component_desc):
     # A StaticMeshComponent exports its local-space bounds (local_bounds); combined with its world transform, this
     # gives an oriented bounding box in world space. The exported world transform and local bounds parse into
     # matrices: a (3, 1) translation, a (3, 3) rotation, a (3, 3) diagonal scale, and (3, 1) local bounds.
-    transform_world_from_component = spear.pipeline.to_numpy_transform_from_json_transform(json_transform=component_desc["attributes"]["world_transform"], as_matrix=True)
+    transform_world_from_component = spear.json.to_numpy_transform_from_json_transform(json_transform=component_desc["attributes"]["world_transform"], as_matrix=True)
     box_min, box_max = component_desc["attributes"]["local_bounds"]
-    box_min = spear.pipeline.to_numpy_array_from_json_vector(json_vector=box_min, as_matrix=True)
-    box_max = spear.pipeline.to_numpy_array_from_json_vector(json_vector=box_max, as_matrix=True)
+    box_min = spear.json.to_numpy_array_from_json_vector(json_vector=box_min, as_matrix=True)
+    box_max = spear.json.to_numpy_array_from_json_vector(json_vector=box_max, as_matrix=True)
 
     translation_world = transform_world_from_component["translation"]
     rotation_world_from_component = transform_world_from_component["rotation"]
@@ -243,7 +244,7 @@ def draw_component(pipeline_dir, transform_world_from_parent_component, componen
         spear.log(f"{log_prefix_str}Processing SceneComponent: {component_desc['stable_name']}")
 
         transform_parent_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
-            spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
+            spear.json.to_spear_transform_from_json_component(json_component=component_desc)
 
         transform_world_from_current_component = spear.math.compose_component_transforms(
             transforms=[transform_world_from_parent_component, transform_parent_from_current_component],
@@ -255,7 +256,7 @@ def draw_component(pipeline_dir, transform_world_from_parent_component, componen
         # SceneComponent.get_world_transform() function. We store the output from get_world_transform() in our
         # exported JSON file for each SceneComponent, so we can simply compare the matrix we computed above
         # against the stored matrix.
-        world_transform = spear.pipeline.to_numpy_matrix_from_json_matrix(json_matrix=component_desc["attributes"]["world_transform_as_matrix"], as_matrix=True)
+        world_transform = spear.json.to_numpy_matrix_from_json_matrix(json_matrix=component_desc["attributes"]["world_transform_as_matrix"], as_matrix=True)
         assert np.allclose(M_world_from_current_component, world_transform)
 
         # ...and only attempt to draw StaticMeshComponents...

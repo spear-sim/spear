@@ -75,7 +75,7 @@ if __name__ == "__main__":
         user_scene_texture_override.set_editor_property(name="value", value=unreal.Name(user_scene_texture_name))
         material_instance.set_editor_property(name="user_scene_texture_overrides", value=[user_scene_texture_override])
 
-        # The UserTextureDivisor parameter is (0, 0) by default and cannot be overriden by a material instance, however
+        # The UserTextureDivisor parameter is (0, 0) by default and cannot be overridden by a material instance, however
         # that's not a problem because the renderer clamps it to >= 1 (PostProcessMaterial.cpp), so output is full-res.
 
         # update and save the material instance

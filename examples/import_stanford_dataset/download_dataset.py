@@ -11,10 +11,10 @@ import wget
 
 
 # Skip the following meshes from the Stanford 3D Scanning Repository:
-#     http://graphics.stanford.edu/pub/3Dscanrep/armadillo/Armadillo.ply.gz          format not recognized by shutil.unpack_archive(...)
-#     http://graphics.stanford.edu/data/3Dscanrep/lucy.tar.gz",                      mesh is very large
-#     http://graphics.stanford.edu/data/3Dscanrep/xyzrgb/xyzrgb_dragon.ply.gz",      format not recognized by shutil.unpack_archive(...)
-#     http://graphics.stanford.edu/data/3Dscanrep/xyzrgb/xyzrgb_statuette.ply.gz"    format not recognized by shutil.unpack_archive(...)
+#     http://graphics.stanford.edu/pub/3Dscanrep/armadillo/Armadillo.ply.gz         format not recognized by shutil.unpack_archive(...)
+#     http://graphics.stanford.edu/data/3Dscanrep/lucy.tar.gz                       mesh is very large
+#     http://graphics.stanford.edu/data/3Dscanrep/xyzrgb/xyzrgb_dragon.ply.gz       format not recognized by shutil.unpack_archive(...)
+#     http://graphics.stanford.edu/data/3Dscanrep/xyzrgb/xyzrgb_statuette.ply.gz    format not recognized by shutil.unpack_archive(...)
 
 mesh_descs = \
 [

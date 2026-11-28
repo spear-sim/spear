@@ -708,10 +708,10 @@ void ASpDebugManager::ReadPixels() const
     AActor* actor = actors.at(0);
     SP_ASSERT(actor);
 
-    USpSceneCaptureComponent2D* sp_scene_capture_component_2d = UnrealUtils::getComponentByName<USpSceneCaptureComponent2D>(actor, "DefaultSceneRoot.final_tone_curve_hdr_");
+    USpSceneCaptureComponent2D* sp_scene_capture_component_2d = UnrealUtils::getComponentByName<USpSceneCaptureComponent2D>(actor, "DefaultSceneRoot.final_tone_curve_hdr");
     SP_ASSERT(sp_scene_capture_component_2d);
     if (!sp_scene_capture_component_2d->IsInitialized()) {
-        SP_LOG("    Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr_ isn't initialized, giving up...");
+        SP_LOG("    Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr isn't initialized, giving up...");
         return;
     }
 

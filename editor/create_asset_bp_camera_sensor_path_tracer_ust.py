@@ -42,8 +42,7 @@ engine_show_flag_settings = {}
 
 # lighting_only
 
-engine_show_flag_settings["lighting_only"] = []
-engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
+engine_show_flag_settings["lighting_only"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
@@ -55,8 +54,7 @@ engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting
 
 # enable_path_tracing
 
-engine_show_flag_settings["enable_path_tracing"] = []
-engine_show_flag_settings["enable_path_tracing"] = engine_show_flag_settings["enable_path_tracing"] + \
+engine_show_flag_settings["enable_path_tracing"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
 ]
@@ -68,7 +66,7 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "final_tone_curve_hdr_",
+            "name": "final_tone_curve_hdr",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -80,7 +78,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "diffuse_and_specular_",
+            "name": "diffuse_and_specular",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -92,7 +90,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "diffuse_only_",
+            "name": "diffuse_only",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -117,7 +115,7 @@ blueprint_desc = \
             ]
         },
         {
-            "name": "lighting_only_",
+            "name": "lighting_only",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -129,7 +127,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
         },
         {
-            "name": "specular_only_",
+            "name": "specular_only",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -181,7 +179,7 @@ if __name__ == "__main__":
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component_"
+    component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(

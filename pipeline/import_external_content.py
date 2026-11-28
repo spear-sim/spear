@@ -77,22 +77,22 @@ if __name__ == "__main__":
     # filesystem paths
     #
 
-    source_unreal_project_source_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    source_unreal_project_source_content_filesystem_path = spear.path.get_filesystem_path_from_content_path(
         content_path=args.source_content_path,
         unreal_project_dir=source_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    temp_unreal_project_source_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    temp_unreal_project_source_content_filesystem_path = spear.path.get_filesystem_path_from_content_path(
         content_path=args.source_content_path,
         unreal_project_dir=temp_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    temp_unreal_project_destination_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    temp_unreal_project_destination_content_filesystem_path = spear.path.get_filesystem_path_from_content_path(
         content_path=args.destination_content_path,
         unreal_project_dir=temp_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    destination_unreal_project_destination_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    destination_unreal_project_destination_content_filesystem_path = spear.path.get_filesystem_path_from_content_path(
         content_path=args.destination_content_path,
         unreal_project_dir=destination_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
@@ -114,9 +114,8 @@ if __name__ == "__main__":
         spear.log("Directory exists, removing: ", temp_unreal_project_dir)
         shutil.rmtree(temp_unreal_project_dir, ignore_errors=True)
 
-    # If symlinks is true, symbolic links in the source tree are represented as symbolic links in the new
-    # tree and the metadata of the original links will be copied as far as the platform allows; if false or
-    # omitted, the contents and metadata of the linked files are copied to the new tree.
+    # We pass symlinks=False, so symlinks in the source directory are replaced with copies of the files and
+    # directories they point to.
     spear.log(f"Copying directory: {reference_unreal_project_dir} -> {temp_unreal_project_dir}")
     shutil.copytree(reference_unreal_project_dir, temp_unreal_project_dir, symlinks=False, ignore_dangling_symlinks=False)
 
@@ -133,16 +132,15 @@ if __name__ == "__main__":
     # the destination.
     #
 
-    # If follow_symlinks is false and src is a symbolic link, a new symbolic link will be created instead of
-    # copying the file src points to.
+    # We pass follow_symlinks=True, so if the source file is a symlink, we copy the file it points to instead of
+    # creating a new symlink.
     if os.path.isfile(source_unreal_project_source_content_filesystem_path):
         os.makedirs(os.path.dirname(temp_unreal_project_source_content_filesystem_path), exist_ok=True)
         spear.log(f"Copying file: {source_unreal_project_source_content_filesystem_path} -> {temp_unreal_project_source_content_filesystem_path}")
         shutil.copyfile(source_unreal_project_source_content_filesystem_path, temp_unreal_project_source_content_filesystem_path, follow_symlinks=True)
 
-    # If symlinks is true, symbolic links in the source tree are represented as symbolic links in the new
-    # tree and the metadata of the original links will be copied as far as the platform allows; if false or
-    # omitted, the contents and metadata of the linked files are copied to the new tree.
+    # We pass symlinks=False, so symlinks in the source directory are replaced with copies of the files and
+    # directories they point to.
     elif os.path.isdir(source_unreal_project_source_content_filesystem_path):
         spear.log(f"Copying directory: {source_unreal_project_source_content_filesystem_path} -> {temp_unreal_project_source_content_filesystem_path}")
         shutil.copytree(source_unreal_project_source_content_filesystem_path, temp_unreal_project_source_content_filesystem_path, symlinks=False, ignore_dangling_symlinks=False)
@@ -181,8 +179,8 @@ if __name__ == "__main__":
     # copy temp project content to destination project
     #
 
-    # If follow_symlinks is false and src is a symbolic link, a new symbolic link will be created instead of
-    # copying the file src points to.
+    # We pass follow_symlinks=True, so if the source file is a symlink, we copy the file it points to instead of
+    # creating a new symlink.
     if os.path.isfile(temp_unreal_project_destination_content_filesystem_path):
         if os.path.exists(destination_unreal_project_destination_content_filesystem_path):
             spear.log("File exists, removing: ", destination_unreal_project_destination_content_filesystem_path)
@@ -191,9 +189,8 @@ if __name__ == "__main__":
         spear.log(f"Copying file: {temp_unreal_project_destination_content_filesystem_path} -> {destination_unreal_project_destination_content_filesystem_path}")
         shutil.copyfile(temp_unreal_project_destination_content_filesystem_path, destination_unreal_project_destination_content_filesystem_path, follow_symlinks=True)
 
-    # If symlinks is true, symbolic links in the source tree are represented as symbolic links in the new
-    # tree and the metadata of the original links will be copied as far as the platform allows; if false or
-    # omitted, the contents and metadata of the linked files are copied to the new tree.
+    # We pass symlinks=False, so symlinks in the source directory are replaced with copies of the files and
+    # directories they point to.
     elif os.path.isdir(temp_unreal_project_destination_content_filesystem_path):
         if os.path.exists(destination_unreal_project_destination_content_filesystem_path):
             spear.log("Directory exists, removing: ", destination_unreal_project_destination_content_filesystem_path)

@@ -103,9 +103,7 @@ def process_scene():
     # that an isolated box stays reachable from itself, we add a duplicate of each isolated box before planning: a box
     # and its duplicate fully overlap, which gives the box a line-graph node to plan within. Two boxes are connected
     # in this graph if they intersect (closed intersection, matching fastpathplanning's Box.intersects).
-    network_box_intersects = np.logical_and(
-        np.all(network_box_mins[:,np.newaxis,:] <= network_box_maxs[np.newaxis,:,:], axis=2),
-        np.all(network_box_mins[np.newaxis,:,:] <= network_box_maxs[:,np.newaxis,:], axis=2))
+    network_box_intersects = compute_box_intersection_graph(box_mins=network_box_mins, box_maxs=network_box_maxs)
     np.fill_diagonal(network_box_intersects, False)
     isolated = np.logical_not(network_box_intersects.any(axis=1))
     L = np.concatenate([network_box_mins, network_box_mins[isolated]])
@@ -117,9 +115,7 @@ def process_scene():
     # reject sampled waypoint sequences that are not mutually reachable without invoking the (much more expensive)
     # planner, which does not itself fail gracefully when the points are unreachable. Every box now intersects at
     # least one other box, so no box is isolated and every in-free-space point is plannable.
-    box_intersects = np.logical_and(
-        np.all(L[:,np.newaxis,:] <= U[np.newaxis,:,:], axis=2),
-        np.all(L[np.newaxis,:,:] <= U[:,np.newaxis,:], axis=2))
+    box_intersects = compute_box_intersection_graph(box_mins=L, box_maxs=U)
     num_components, box_component = scipy.sparse.csgraph.connected_components(box_intersects, directed=False)
 
     # Precompute per-box volumes and per-component total box volumes, used to sample waypoints (see
@@ -243,6 +239,14 @@ def interrupt_planning(planning_timed_out):
     # first to distinguish it from the user pressing Ctrl-C.
     planning_timed_out.set()
     _thread.interrupt_main()
+
+# Returns a symmetric boolean matrix whose (i,j) entry is True if boxes i and j intersect (closed intersection, so boxes
+# that only touch also intersect). Every box intersects itself, so the diagonal is True.
+def compute_box_intersection_graph(box_mins, box_maxs):
+    return np.logical_and(
+        np.all(box_mins[:,np.newaxis,:] <= box_maxs[np.newaxis,:,:], axis=2),
+        np.all(box_mins[np.newaxis,:,:] <= box_maxs[:,np.newaxis,:], axis=2))
+
 
 def sample_reachable_waypoints(L, U, box_component, box_volumes, component_volumes):
 

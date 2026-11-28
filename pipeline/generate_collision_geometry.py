@@ -62,8 +62,13 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
     else:
         static_mesh_components_grouped_by_merge_id = {}
 
-    raw_obj_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry", "raw", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"])
+    actor_dir_name = actor_name.replace("/", ".").replace(":", ".")
+
+    raw_obj_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry", "raw", actor_dir_name, kinematic_tree_node["name"])
     os.makedirs(raw_obj_dir, exist_ok=True)
+
+    coacd_obj_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry", "coacd", actor_dir_name, kinematic_tree_node["name"])
+    os.makedirs(coacd_obj_dir, exist_ok=True)
 
     # TODO: Break this group-by-merge-id step into a different pipeline stage, so we can generate the
     # grouped-by-merge-id meshes once, and then run different convex decomposition strategies on them
@@ -116,9 +121,6 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         coacd_parts_data = coacd.run_coacd(coacd_mesh)
 
         # Save COACD result as individual parts, and as a combined mesh for debugging.
-        coacd_obj_dir = spear.path.realpath(args.pipeline_dir, "collision_geometry", "coacd", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"])
-        os.makedirs(coacd_obj_dir, exist_ok=True)
-
         coacd_part_obj_dir = spear.path.realpath(coacd_obj_dir, f"merge_id_{merge_id:04}")
         os.makedirs(coacd_part_obj_dir, exist_ok=True)
 
@@ -140,8 +142,8 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         spear.log(f"{log_prefix_str}Writing OBJ file: {coacd_obj_path}")
         coacd_parts_scene.export(coacd_obj_path, "obj")
 
-    # Recurse for each child node. We need to copy() so we're not modifying the dict as we're iterating over it.
-    for child_kinematic_tree_node_name, child_kinematic_tree_node in kinematic_tree_node["children_nodes"].copy().items():
+    # Recurse for each child node.
+    for child_kinematic_tree_node_name, child_kinematic_tree_node in kinematic_tree_node["children_nodes"].items():
         kinematic_tree_node["children_nodes"][child_kinematic_tree_node_name]["node"] = generate_collision_geometry_for_kinematic_tree_node(
             actor_name=actor_name,
             kinematic_tree_node=child_kinematic_tree_node["node"],

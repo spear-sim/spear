@@ -182,21 +182,21 @@ def get_script_delta_time():
 # Module-level globals
 #
 
-asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
-asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
-editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
+_asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
+_asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+_editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+_unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+_subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
-editor_properties_csv_file = spear.path.realpath(os.path.dirname(__file__), "..", "data", "editor_properties.csv")
-df_editor_properties = pd.read_csv(editor_properties_csv_file, comment="#")
+_editor_properties_csv_file = spear.path.realpath(os.path.dirname(__file__), "..", "data", "editor_properties.csv")
+_df_editor_properties = pd.read_csv(_editor_properties_csv_file, comment="#")
 
 #
 # Get actors and components
 #
 
 def find_actors(actor_class=unreal.Actor):
-    actors = editor_actor_subsystem.get_all_level_actors()
+    actors = _editor_actor_subsystem.get_all_level_actors()
     actors = sorted(actors, key=lambda actor: get_stable_name_for_actor(actor=actor))
     if actor_class is not None:
         actors = [ a for a in actors if isinstance(a, actor_class) ]
@@ -250,7 +250,7 @@ def get_stable_name_for_actor(actor, include_unreal_id=False):
         stable_name = posixpath.join(str(folder_path), actor.get_actor_label())
 
     if include_unreal_id:
-        assert actor.get_world() == unreal_editor_subsystem.get_editor_world() # get_path_name() would include a PIE prefix in a PIE game
+        assert actor.get_world() == _unreal_editor_subsystem.get_editor_world() # get_path_name() would include a PIE prefix in a PIE game
         if stable_name != "":
             sep = ":"
         else:
@@ -282,7 +282,7 @@ def create_blueprint_asset(asset_name, package_dir, parent_class):
     blueprint_factory.set_editor_property(name="parent_class", value=parent_class)
 
     # asset_class should be set to None when creating a new blueprint asset
-    blueprint_asset = asset_tools.create_asset(asset_name=asset_name, package_path=package_dir, asset_class=None, factory=blueprint_factory)
+    blueprint_asset = _asset_tools.create_asset(asset_name=asset_name, package_path=package_dir, asset_class=None, factory=blueprint_factory)
     assert isinstance(blueprint_asset, unreal.Blueprint)
 
     return blueprint_asset
@@ -301,13 +301,13 @@ def add_new_subobject_to_blueprint_asset(blueprint_asset, parent_data_handle, su
     return add_new_subobject_using_params(add_new_subobject_params=add_new_subobject_params, subobject_name=subobject_name, subobject_class=subobject_class)
 
 def add_new_subobject_using_params(add_new_subobject_params, subobject_name, subobject_class):
-    subobject_data_handle, fail_reason = subobject_data_subsystem.add_new_subobject(params=add_new_subobject_params)
+    subobject_data_handle, fail_reason = _subobject_data_subsystem.add_new_subobject(params=add_new_subobject_params)
     assert fail_reason.is_empty()
     subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(data_handle=subobject_data_handle)
     assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(data=subobject_data)
     subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(data=subobject_data)
     assert isinstance(subobject_object, subobject_class)
-    success = subobject_data_subsystem.rename_subobject(handle=subobject_data_handle, new_name=unreal.Text(subobject_name))
+    success = _subobject_data_subsystem.rename_subobject(handle=subobject_data_handle, new_name=unreal.Text(subobject_name))
     assert success
     return {"data_handle": subobject_data_handle, "data": subobject_data, "object": subobject_object}
 
@@ -317,12 +317,12 @@ def add_new_subobject_using_params(add_new_subobject_params, subobject_name, sub
 
 def get_subobject_descs_for_instance(instance):
     assert isinstance(instance, unreal.Object)
-    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_instance(context=instance)
+    subobject_data_handles = _subobject_data_subsystem.k2_gather_subobject_data_for_instance(context=instance)
     return get_subobject_descs_for_data_handles(subobject_data_handles=subobject_data_handles)
 
 def get_subobject_descs_for_blueprint_asset(blueprint_asset):
     assert isinstance(blueprint_asset, unreal.Blueprint)
-    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(context=blueprint_asset)
+    subobject_data_handles = _subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(context=blueprint_asset)
     return get_subobject_descs_for_data_handles(subobject_data_handles=subobject_data_handles)
 
 def get_subobject_descs_for_data_handles(subobject_data_handles):
@@ -402,7 +402,7 @@ def get_asset_desc(asset_data):
     # Immediate (non-recursive) dependencies come from the Asset Registry's cached metadata, so we get the
     # dependency package names without loading the referenced assets.
     dependency_options = unreal.AssetRegistryDependencyOptions(include_soft_package_references=True, include_hard_package_references=True)
-    dependencies = sorted( str(d) for d in asset_registry.get_dependencies(package_name=asset_data.package_name, dependency_options=dependency_options) )
+    dependencies = sorted( str(d) for d in _asset_registry.get_dependencies(package_name=asset_data.package_name, dependency_options=dependency_options) )
 
     # We don't recurse into objects, since every referenced asset is already its own top-level entry, and
     # following references could cycle.
@@ -432,7 +432,7 @@ def get_editor_property_descs(uobject, recurse_into_objects):
     uobject_class_names = [ c.__name__ for c in uobject.__class__.mro() ] # derived-to-base order
     editor_property_candidate_names = set(dir(uobject))
     for uobject_class_name in uobject_class_names:
-        editor_property_candidate_names = editor_property_candidate_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class_name]["editor_property"])
+        editor_property_candidate_names = editor_property_candidate_names | set(_df_editor_properties.loc[_df_editor_properties["class"] == uobject_class_name]["editor_property"])
 
     # Guess-and-check all editor property candidates.
     editor_property_descs = {}

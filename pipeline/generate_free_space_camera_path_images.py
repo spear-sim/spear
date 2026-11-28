@@ -4,7 +4,6 @@
 #
 
 import argparse
-import cv2
 import h5py
 import os
 import spear
@@ -58,7 +57,7 @@ def process_scene():
     assert os.path.exists(free_space_camera_paths_file)
     with h5py.File(free_space_camera_paths_file, "r") as f:
         camera_path_positions = f["camera_path_positions"][:]
-        camera_path_orientations = f["camera_path_orientations"][:]
+        camera_path_rotations = f["camera_path_rotations"][:]
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
     # offscreen and which scene to open (the scene must be the one this pipeline directory was generated from).
@@ -72,7 +71,7 @@ def process_scene():
     with instance.begin_frame():
         camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         camera_sensor = game.unreal_service.spawn_actor(uclass=camera_sensor_uclass)
-        capture_component = game.unreal_service.get_component_by_name(actor=camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
+        capture_component = game.unreal_service.get_component_by_name(actor=camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr", uclass="USpSceneCaptureComponent2D")
         capture_component.Width = image_width
         capture_component.Height = image_height
         capture_component.ProjectionType = "Perspective"
@@ -102,7 +101,7 @@ def process_scene():
         with instance.begin_frame():
             camera_sensor.K2_SetActorLocationAndRotation(
                 NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=camera_path_positions[path_index][0]),
-                NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=camera_path_orientations[path_index][0]),
+                NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=camera_path_rotations[path_index][0]),
                 bSweep=False, bTeleport=True)
         with instance.end_frame():
             pass
@@ -116,14 +115,12 @@ def process_scene():
             with instance.begin_frame():
                 camera_sensor.K2_SetActorLocationAndRotation(
                     NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=camera_path_positions[path_index][frame_index]),
-                    NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=camera_path_orientations[path_index][frame_index]),
+                    NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=camera_path_rotations[path_index][frame_index]),
                     bSweep=False, bTeleport=True)
             with instance.end_frame():
-                # The final-tone-curve component renders a BGRA uint8 image, which OpenCV writes directly as a PNG.
-                image = capture_component.read_pixels()["arrays"]["data"]
+                image = capture_component.read_pixels()["arrays"]["data"][:,:,[0,1,2]] # native BGR (drop alpha)
             image_file = spear.path.realpath(path_images_dir, f"{frame_index:04}.png")
-            spear.log("Saving image: ", image_file)
-            cv2.imwrite(image_file, image)
+            spear.image.save_image(image=image, image_file=image_file)
 
         frames_per_second = num_frames/(time.time() - render_start_time)
         spear.log(f"Rendered {num_frames} images for path {path_index} ({frames_per_second:.1f} FPS).")

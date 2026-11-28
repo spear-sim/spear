@@ -63,7 +63,7 @@ semantic_instance_categories = [
 component_descs = \
 [
     {
-        "name": "final_tone_curve_hdr_",
+        "name": "final_tone_curve_hdr",
         "spatial_supersampling_factor": 1,
         "read_primary_pixel_data": True,
         "user_scene_texture_names": ["MaterialAO", "Metallic", "Roughness", "SpecularForLighting", "SpDepthMeters", "SpWorldPosition", "WorldNormal"],
@@ -80,7 +80,7 @@ component_descs = \
         }
     },
     {
-        "name": "diffuse_and_specular_",
+        "name": "diffuse_and_specular",
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
         "user_scene_texture_names": ["PostProcessInput2"],
@@ -90,7 +90,7 @@ component_descs = \
         }
     },
     {
-        "name": "diffuse_only_",
+        "name": "diffuse_only",
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
         "user_scene_texture_names": ["DiffuseColor", "PostProcessInput2"],
@@ -101,7 +101,7 @@ component_descs = \
         }
     },
     {
-        "name": "lighting_only_",
+        "name": "lighting_only",
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
         "user_scene_texture_names": ["DiffuseColor", "PostProcessInput2"],
@@ -112,7 +112,7 @@ component_descs = \
         }
     },
     {
-        "name": "sp_object_ids_uint8_",
+        "name": "sp_object_ids_uint8",
         "spatial_supersampling_factor": 1,
         "read_primary_pixel_data": True,
         "user_scene_texture_names": [],
@@ -175,7 +175,7 @@ if __name__ == "__main__":
             component_desc["component"] = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name=f"DefaultSceneRoot.{component_desc['name']}", uclass="USpSceneCaptureComponent2D")
 
             # get final_tone_curve_hdr_component
-            if component_desc["name"] == "final_tone_curve_hdr_":
+            if component_desc["name"] == "final_tone_curve_hdr":
                 final_tone_curve_hdr_component = component_desc["component"]
 
         assert final_tone_curve_hdr_component is not None
@@ -218,7 +218,7 @@ if __name__ == "__main__":
         # create component desc map for easier bookkeeping later
         component_desc_map = { desc["name"]: desc for desc in component_descs }
 
-        object_ids_bgra_uint8_image = component_desc_map["sp_object_ids_uint8_"]["arrays"]["data"]
+        object_ids_bgra_uint8_image = component_desc_map["sp_object_ids_uint8"]["arrays"]["data"]
         proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
 
     # get actor names and pointers
@@ -285,66 +285,59 @@ if __name__ == "__main__":
                 image = image[:, :, [2,1,0]] # RGB -> BGR
             elif image.ndim == 2:
                 image = cv2.applyColorMap(image, cv2.COLORMAP_VIRIDIS) # match matplotlib's default colormap for single-channel images
-            spear.log("Saving image: ", image_file)
-            cv2.imwrite(image_file, image)
+            spear.image.save_image(image=image, image_file=image_file)
 
     # foreground
     foreground = np.isin(proxy_id_image, foreground_actor_proxy_ids)*255
     image_file = spear.path.realpath(images_dir, "_foreground.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, cv2.applyColorMap(foreground.astype(np.uint8), cv2.COLORMAP_VIRIDIS)) # match matplotlib's default colormap for single-channel images
+    spear.image.save_image(image=cv2.applyColorMap(foreground.astype(np.uint8), cv2.COLORMAP_VIRIDIS), image_file=image_file) # match matplotlib's default colormap for single-channel images
 
     # semantic
     semantic = semantic_colors[semantic_id_image]
     image_file = spear.path.realpath(images_dir, "_semantic.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, semantic[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=semantic[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # semantic instance
     semantic_instance = semantic_instance_colors[semantic_instance_id_image]
     image_file = spear.path.realpath(images_dir, "_semantic_instance.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, semantic_instance[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=semantic_instance[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # material
     material = material_colors[material_id_image]
     image_file = spear.path.realpath(images_dir, "_material.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, material[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=material[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # diffuse_reflectance
     gamma = 1.0/2.2
-    spatial_supersampling_factor = component_desc_map["diffuse_only_"]["spatial_supersampling_factor"]
-    diffuse_reflectance = component_desc_map["diffuse_only_"]["arrays"]["DiffuseColor"][:,:,[0,1,2]].astype(np.float32)
+    spatial_supersampling_factor = component_desc_map["diffuse_only"]["spatial_supersampling_factor"]
+    diffuse_reflectance = component_desc_map["diffuse_only"]["arrays"]["DiffuseColor"][:,:,[0,1,2]].astype(np.float32)
     diffuse_reflectance = np.power(np.maximum(diffuse_reflectance, 0), gamma)
     diffuse_reflectance = np.clip(diffuse_reflectance, 0.0, 1.0)
     diffuse_reflectance = PIL.Image.fromarray((diffuse_reflectance*255.0).astype(np.uint8))
     diffuse_reflectance = diffuse_reflectance.resize((diffuse_reflectance.width // spatial_supersampling_factor, diffuse_reflectance.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_reflectance = np.asarray(diffuse_reflectance)
     image_file = spear.path.realpath(images_dir, "_diffuse_reflectance.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=diffuse_reflectance[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # diffuse_illumination
-    spatial_supersampling_factor = component_desc_map["lighting_only_"]["spatial_supersampling_factor"]
+    spatial_supersampling_factor = component_desc_map["lighting_only"]["spatial_supersampling_factor"]
     mask = proxy_id_image != 0
     mask = np.repeat(np.repeat(mask, spatial_supersampling_factor, axis=0), spatial_supersampling_factor, axis=1)
-    lighting_only_diffuse_color = component_desc_map["lighting_only_"]["arrays"]["DiffuseColor"][:,:,[0,1,2]].astype(np.float32)
-    lighting_only_post_process_input_2 = component_desc_map["lighting_only_"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
+    lighting_only_diffuse_color = component_desc_map["lighting_only"]["arrays"]["DiffuseColor"][:,:,[0,1,2]].astype(np.float32)
+    lighting_only_post_process_input_2 = component_desc_map["lighting_only"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
     diffuse_illumination = spear.image.tone_map_hypersim(image=lighting_only_post_process_input_2/lighting_only_diffuse_color, mask=mask)
     diffuse_illumination = np.clip(diffuse_illumination, 0.0, 1.0)
     diffuse_illumination = PIL.Image.fromarray((diffuse_illumination*255.0).astype(np.uint8))
     diffuse_illumination = diffuse_illumination.resize((diffuse_illumination.width // spatial_supersampling_factor, diffuse_illumination.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_illumination = np.asarray(diffuse_illumination)
     image_file = spear.path.realpath(images_dir, "_diffuse_illumination.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, diffuse_illumination[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=diffuse_illumination[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # diffuse_and_specular
-    spatial_supersampling_factor = component_desc_map["diffuse_and_specular_"]["spatial_supersampling_factor"]
+    spatial_supersampling_factor = component_desc_map["diffuse_and_specular"]["spatial_supersampling_factor"]
     mask = proxy_id_image != 0
     mask = np.repeat(np.repeat(mask, spatial_supersampling_factor, axis=0), spatial_supersampling_factor, axis=1)
-    diffuse_and_specular = component_desc_map["diffuse_and_specular_"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
+    diffuse_and_specular = component_desc_map["diffuse_and_specular"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
     tone_map_result_dict = spear.image.tone_map_hypersim(image=diffuse_and_specular, mask=mask, as_dict=True) # get scale and gamma from tone-mapping diffuse_and_specular and use repeatedly
     diffuse_and_specular, tone_map_scale, tone_map_gamma = tone_map_result_dict["image_tone_map"], tone_map_result_dict["scale"], tone_map_result_dict["gamma"]
     diffuse_and_specular = np.clip(diffuse_and_specular, 0.0, 1.0)
@@ -352,26 +345,24 @@ if __name__ == "__main__":
     diffuse_and_specular = diffuse_and_specular.resize((diffuse_and_specular.width // spatial_supersampling_factor, diffuse_and_specular.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_and_specular = np.asarray(diffuse_and_specular)
     image_file = spear.path.realpath(images_dir, "_diffuse_and_specular.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, diffuse_and_specular[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=diffuse_and_specular[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # diffuse_only
-    spatial_supersampling_factor = component_desc_map["diffuse_only_"]["spatial_supersampling_factor"]
-    diffuse_only = component_desc_map["diffuse_only_"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
+    spatial_supersampling_factor = component_desc_map["diffuse_only"]["spatial_supersampling_factor"]
+    diffuse_only = component_desc_map["diffuse_only"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
     diffuse_only = np.power(np.maximum(tone_map_scale*diffuse_only, 0), tone_map_gamma) # use previous scale and gamma
     diffuse_only = np.clip(diffuse_only, 0.0, 1.0)
     diffuse_only = PIL.Image.fromarray((diffuse_only*255.0).astype(np.uint8))
     diffuse_only = diffuse_only.resize((diffuse_only.width // spatial_supersampling_factor, diffuse_only.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_only = np.asarray(diffuse_only)
     image_file = spear.path.realpath(images_dir, "_diffuse_only.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, diffuse_only[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=diffuse_only[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # residual
-    assert component_desc_map["diffuse_and_specular_"]["spatial_supersampling_factor"] == component_desc_map["diffuse_only_"]["spatial_supersampling_factor"]
-    spatial_supersampling_factor = component_desc_map["diffuse_and_specular_"]["spatial_supersampling_factor"]
-    diffuse_and_specular = component_desc_map["diffuse_and_specular_"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
-    diffuse_only = component_desc_map["diffuse_only_"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
+    assert component_desc_map["diffuse_and_specular"]["spatial_supersampling_factor"] == component_desc_map["diffuse_only"]["spatial_supersampling_factor"]
+    spatial_supersampling_factor = component_desc_map["diffuse_and_specular"]["spatial_supersampling_factor"]
+    diffuse_and_specular = component_desc_map["diffuse_and_specular"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
+    diffuse_only = component_desc_map["diffuse_only"]["arrays"]["PostProcessInput2"][:,:,[0,1,2]].astype(np.float32)
     residual = diffuse_and_specular - diffuse_only
     residual = np.power(np.maximum(tone_map_scale*residual, 0.0), tone_map_gamma) # use previous scale and gamma
     residual = np.clip(residual, 0.0, 1.0)
@@ -379,8 +370,7 @@ if __name__ == "__main__":
     residual = residual.resize((residual.width // spatial_supersampling_factor, residual.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     residual = np.asarray(residual)
     image_file = spear.path.realpath(images_dir, "_residual.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, residual[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=residual[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # terminate actors and components
     with instance.begin_frame():

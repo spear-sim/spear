@@ -17,22 +17,22 @@ component_descs = \
 [
     {
         "name": "final_tone_curve_hdr",
-        "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "long_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     },
     {
         "name": "sp_object_ids_uint8",
-        "long_name": "DefaultSceneRoot.sp_object_ids_uint8_",
+        "long_name": "DefaultSceneRoot.sp_object_ids_uint8",
         "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     },
     {
         "name": "sp_unlit_float16",
-        "long_name": "DefaultSceneRoot.sp_unlit_float16_",
+        "long_name": "DefaultSceneRoot.sp_unlit_float16",
         "visualize_func": lambda data : (np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # RGB [0,1] -> BGR uint8
     },
     {
         "name": "sp_world_position",
-        "long_name": "DefaultSceneRoot.sp_world_position_",
+        "long_name": "DefaultSceneRoot.sp_world_position",
         "visualize_func": lambda data : (np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # RGB [0,1] -> BGR uint8
     }
 ]
@@ -217,8 +217,7 @@ if __name__ == "__main__":
         data = component_desc["data"]
         image_file = spear.path.realpath(images_dir, f"{component_desc['name']}.png")
         image = component_desc["visualize_func"](data=data)
-        spear.log("Saving image: ", image_file)
-        cv2.imwrite(image_file, image)
+        spear.image.save_image(image=image, image_file=image_file)
 
     # save segmentation image with colors matching debug draw
     bounding_box_ptrs = [ 0 if actor is None else actor.uobject.ptr for actor in bounding_box_actors ]
@@ -227,8 +226,7 @@ if __name__ == "__main__":
     bounding_box_colors_uint8 = np.round(bounding_box_colors*255.0).astype(np.uint8)
     segmentation_image = bounding_box_colors_uint8[proxy_bounding_box_ids[proxy_id_image]]
     image_file = spear.path.realpath(images_dir, "segmentation.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, segmentation_image[:,:,[2,1,0]]) # RGB -> BGR
+    spear.image.save_image(image=segmentation_image[:,:,[2,1,0]], image_file=image_file) # RGB -> BGR
 
     # save planar depth image
 
@@ -250,8 +248,7 @@ if __name__ == "__main__":
     planar_depth_image = np.clip(planar_depth_image, 0.0, K)/K
 
     image_file = spear.path.realpath(images_dir, "planar_depth.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, cv2.applyColorMap((planar_depth_image*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS))
+    spear.image.save_image(image=cv2.applyColorMap((planar_depth_image*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS), image_file=image_file)
 
     # cleanup
     with instance.begin_frame():

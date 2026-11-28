@@ -30,9 +30,9 @@ component_common_desc = \
 
 component_descs = \
 [
-    { "name": "final_tone_curve_hdr_00_", "location": unreal.Vector(x=20, y=-140, z=0), "rotation": unreal.Rotator(pitch=0, yaw=40, roll=0) },
-    { "name": "final_tone_curve_hdr_01_", "location": unreal.Vector(x=0,  y=0,    z=0), "rotation": unreal.Rotator(pitch=0, yaw=0,  roll=0) },
-    { "name": "final_tone_curve_hdr_02_", "location": unreal.Vector(x=20, y=+140, z=0), "rotation": unreal.Rotator(pitch=0, yaw=-40, roll=0) }
+    { "name": "final_tone_curve_hdr_00", "location": unreal.Vector(x=20, y=-140, z=0), "rotation": unreal.Rotator(pitch=0, yaw=40, roll=0) },
+    { "name": "final_tone_curve_hdr_01", "location": unreal.Vector(x=0,  y=0,    z=0), "rotation": unreal.Rotator(pitch=0, yaw=0,  roll=0) },
+    { "name": "final_tone_curve_hdr_02", "location": unreal.Vector(x=20, y=+140, z=0), "rotation": unreal.Rotator(pitch=0, yaw=-40, roll=0) }
 ]
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component_"
+    component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         subobject_class=unreal.SpStableNameComponent)
 
     # create SpSceneCaptureComponent2Ds
-    for i, component_desc in enumerate(component_descs):
+    for component_desc in component_descs:
 
         component_name = component_desc["name"]
         spear.log("Creating component: ", component_name)
@@ -91,8 +91,8 @@ if __name__ == "__main__":
 
         # SpSceneCaptureComponent2D properties
 
-        sp_scene_capture_component_2d.set_editor_property(name="relative_location", value=component_desc["location"])
-        sp_scene_capture_component_2d.set_editor_property(name="relative_rotation", value=component_desc["rotation"])
+        sp_scene_capture_component_2d.set_relative_location(new_location=component_desc["location"], sweep=False, teleport=False)
+        sp_scene_capture_component_2d.set_relative_rotation(new_rotation=component_desc["rotation"], sweep=False, teleport=False)
 
         sp_scene_capture_component_2d.set_editor_property(name="width", value=component_common_desc["width"])
         sp_scene_capture_component_2d.set_editor_property(name="height", value=component_common_desc["height"])

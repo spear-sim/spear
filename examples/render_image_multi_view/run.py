@@ -7,7 +7,6 @@
 
 # Before running this example, you should have a good understanding of the example in render_image/run.py
 
-import cv2
 import imageio_ffmpeg
 import numpy as np
 import os
@@ -93,18 +92,17 @@ if __name__ == "__main__":
             bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=p_world))
 
         with instance.end_frame():
-            canvas = np.zeros((component_height*num_rows, component_width*num_cols, 4), dtype=np.uint8)
+            canvas = np.zeros((component_height*num_rows, component_width*num_cols, 3), dtype=np.uint8)
             for c, component_name in enumerate(component_names):
                 component = components[component_name]
                 i = c % num_cols
                 j = c // num_cols
                 data_bundle = component.read_pixels()
-                data = data_bundle["arrays"]["data"]
+                data = data_bundle["arrays"]["data"][:,:,[0,1,2]] # native BGR (drop alpha)
                 canvas[component_height*j : component_height*(j+1), component_width*i : component_width*(i+1)] = data
 
         image_file = spear.path.realpath(images_dir, f"{f:04}.png")
-        spear.log("Saving image: ", image_file)
-        cv2.imwrite(image_file, canvas)
+        spear.image.save_image(image=canvas, image_file=image_file)
 
     with instance.begin_frame():
         pass

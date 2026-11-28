@@ -56,7 +56,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "register_worlds", [this]() -> void {
             for (auto& [name, desc] : world_descs_) {
-                if (desc.is_registered_internal_) {
+                if (!desc.is_registered_internal_) {
                     SP_LOG("Marking world as registered: ", name);
                     desc.is_registered_internal_ = true;
                 }
@@ -239,7 +239,7 @@ private:
                 desc.is_initialized_internal_ = true;
             }
         } else {
-                SP_LOG("    Marking world as initialized: ", name);
+            SP_LOG("    Marking world as initialized: ", name);
             desc.is_initialized_internal_ = true;
         }
     }
@@ -265,17 +265,7 @@ private:
                 }
             }
 
-            bool log_current_function = false;
-
-            for (const auto& name : completed) {
-                log_current_function = true;
-            }
-
-            if (skylight_state_.empty()) {
-                log_current_function = true;
-            }
-
-            if (log_current_function) {
+            if (!completed.empty()) {
                 SP_LOG_CURRENT_FUNCTION();
             }
 

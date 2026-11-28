@@ -42,7 +42,7 @@ if __name__ == "__main__":
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
-        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
+        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr", uclass="USpSceneCaptureComponent2D")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
         viewport_desc = game.viewport_service.get_current_viewport_desc()
@@ -77,8 +77,7 @@ if __name__ == "__main__":
 
     # save image (cv2 writes the native BGR, dropping alpha)
     image_file = spear.path.realpath(os.path.dirname(__file__), "image.png")
-    spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, data_bundle["arrays"]["data"][:,:,[0,1,2]])
+    spear.image.save_image(image=data_bundle["arrays"]["data"][:,:,[0,1,2]], image_file=image_file)
 
     # terminate actors and components
     with instance.begin_frame():

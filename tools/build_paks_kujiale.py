@@ -48,6 +48,16 @@ def get_assets_in_pak_files(unreal_pak_bin, pak_files):
         assert return_code == 0
     return sorted(list(set(assets)))
 
+def update_symlink(unreal_project_dir, content_dir, update_action):
+    cmd = [
+        "python",
+        spear.path.realpath(os.path.dirname(__file__), "update_symlink_for_external_content.py"),
+        "--external-content-dir", spear.path.realpath(args.external_content_dir, content_dir),
+        "--unreal-project-dir", unreal_project_dir,
+        "--unreal-project-content-dir", content_dir,
+        f"--{update_action}"]
+    spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
+
 
 if __name__ == "__main__":
 
@@ -105,184 +115,159 @@ if __name__ == "__main__":
         "MSPresets"]
 
     for common_content_dir in common_content_dirs:
+        update_symlink(unreal_project_dir=unreal_project_dir, content_dir=common_content_dir, update_action="create")
 
-        update_action = "create"
-        cmd = [
-            "python",
-            spear.path.realpath(os.path.dirname(__file__), "update_symlink_for_external_content.py"),
-            "--external-content-dir", spear.path.realpath(args.external_content_dir, common_content_dir),
-            "--unreal-project-dir", unreal_project_dir,
-            "--unreal-project-content-dir", common_content_dir,
-            f"--{update_action}"]
-        spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
+    # We remove symlinks in a finally block, so we don't leave them in the user's Unreal project if a build step fails.
+    try:
 
-    #
-    # build common pak
-    #
+        #
+        # build common pak
+        #
 
-    if not args.skip_build_common_pak:
-
-        # We do not want to use spear.path.realpath(...) here, because that will resolve to the directory inside the
-        # user's external directory. Instead, we want this path to refer to the symlinked path inside the user's
-        # Unreal project directory.
-        cook_dirs_file = spear.path.realpath(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_cook_dirs.csv")
-        cook_dirs = [
-            os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
-            os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
-            os.path.join(unreal_project_dir, "Content", "Kujiale", "Objects"),
-            os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
-            os.path.join(unreal_project_dir, "Content", "Megascans"),
-            os.path.join(unreal_project_dir, "Content", "MSPresets")]
-        df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
-        df.to_csv(cook_dirs_file, index=False)
-
-        include_assets_file = spear.path.realpath(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_include_assets.csv")
-        include_assets = [
-            os.path.join("Engine", "Content", "**", "*.*"),
-            os.path.join("Engine", "Plugins", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Kujiale", "Objects", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
-        df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
-        df.to_csv(include_assets_file, index=False)
-
-        exclude_assets_file = spear.path.realpath(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_exclude_assets.csv")
-        exclude_pak_files = [default_pak]
-        exclude_assets = get_assets_in_pak_files(unreal_pak_bin=unreal_pak_bin, pak_files=exclude_pak_files)
-        df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
-        df.to_csv(exclude_assets_file, index=False)
-
-        pak_file = spear.path.realpath(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak")
-        cmd = [
-            "python",
-            spear.path.realpath(os.path.dirname(__file__), "build_pak.py"),
-            "--pak-file", pak_file,
-            "--cook-dirs-file", cook_dirs_file,
-            "--include-assets-file", include_assets_file,
-            "--exclude-assets-file", exclude_assets_file,
-            "--unreal-engine-dir", args.unreal_engine_dir,
-            "--unreal-project-dir", unreal_project_dir]
-        spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
-
-    #
-    # build scene-specific paks
-    #
-
-    if not args.skip_build_scene_paks:
-
-        external_content_scenes_dir = spear.path.realpath(args.external_content_dir, "Kujiale", "Scenes")
-        ignore_names = [".DS_Store"]
-        candidate_scene_ids = [ os.path.basename(x) for x in sorted(os.listdir(external_content_scenes_dir)) if x not in ignore_names ]
-
-        if args.scene_ids is None:
-            scene_ids = candidate_scene_ids
-        else:
-            matched_scene_ids = []
-            for candidate_scene_id in candidate_scene_ids:
-                for arg_scene_id in args.scene_ids:
-                    if fnmatch.fnmatch(candidate_scene_id, arg_scene_id):
-                        matched_scene_ids.append(candidate_scene_id)
-                        break
-            scene_ids = matched_scene_ids
-
-        for scene_id in scene_ids:
-
-            scene_content_dir = os.path.join("Kujiale", "Scenes", scene_id)
-
-            # create symlink
-            update_action = "create"
-            cmd = [
-                "python",
-                spear.path.realpath(os.path.dirname(__file__), "update_symlink_for_external_content.py"),
-                "--external-content-dir", spear.path.realpath(args.external_content_dir, scene_content_dir),
-                "--unreal-project-dir", unreal_project_dir,
-                "--unreal-project-content-dir", scene_content_dir,
-                f"--{update_action}"]
-            spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
-
-            # build pak
+        if not args.skip_build_common_pak:
 
             # We do not want to use spear.path.realpath(...) here, because that will resolve to the directory inside the
             # user's external directory. Instead, we want this path to refer to the symlinked path inside the user's
             # Unreal project directory.
-            cook_dirs_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_cook_dirs.csv")
+            cook_dirs_file = spear.path.realpath(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_cook_dirs.csv")
             cook_dirs = [
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Objects"),
-                os.path.join(unreal_project_dir, "Content", "Kujiale", "Scenes", scene_id),
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
                 os.path.join(unreal_project_dir, "Content", "Megascans"),
                 os.path.join(unreal_project_dir, "Content", "MSPresets")]
             df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
             df.to_csv(cook_dirs_file, index=False)
 
-            cook_maps_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_cook_maps.csv")
-            cook_maps = [scene_id]
-            df = pd.DataFrame(columns=["cook_maps"], data={"cook_maps": cook_maps})
-            df.to_csv(cook_maps_file, index=False)
-
-            include_assets_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_include_assets.csv")
+            include_assets_file = spear.path.realpath(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_include_assets.csv")
             include_assets = [
                 os.path.join("Engine", "Content", "**", "*.*"),
                 os.path.join("Engine", "Plugins", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Kujiale", "Objects", "**", "*.*"),
-                os.path.join("SpearSim", "Content", "Kujiale", "Scenes", scene_id, "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
             df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
             df.to_csv(include_assets_file, index=False)
 
-            exclude_assets_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv")
-            exclude_pak_files = [default_pak, spear.path.realpath(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak")]
+            exclude_assets_file = spear.path.realpath(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_exclude_assets.csv")
+            exclude_pak_files = [default_pak]
             exclude_assets = get_assets_in_pak_files(unreal_pak_bin=unreal_pak_bin, pak_files=exclude_pak_files)
             df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
             df.to_csv(exclude_assets_file, index=False)
 
-            pak_file = spear.path.realpath(args.paks_dir, args.version_tag, f"{scene_id}-{args.version_tag}-{platform}.pak")
+            pak_file = spear.path.realpath(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak")
             cmd = [
                 "python",
                 spear.path.realpath(os.path.dirname(__file__), "build_pak.py"),
                 "--pak-file", pak_file,
                 "--cook-dirs-file", cook_dirs_file,
-                "--cook-maps-file", cook_maps_file,
                 "--include-assets-file", include_assets_file,
                 "--exclude-assets-file", exclude_assets_file,
                 "--unreal-engine-dir", args.unreal_engine_dir,
                 "--unreal-project-dir", unreal_project_dir]
             spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
-            # remove symlink
-            update_action = "remove"
-            cmd = [
-                "python",
-                spear.path.realpath(os.path.dirname(__file__), "update_symlink_for_external_content.py"),
-                "--external-content-dir", spear.path.realpath(args.external_content_dir, scene_content_dir),
-                "--unreal-project-dir", unreal_project_dir,
-                "--unreal-project-content-dir", scene_content_dir,
-                f"--{update_action}"]
-            spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
+        #
+        # build scene-specific paks
+        #
 
-    #
-    # remove symlinks for common dirs
-    #
+        if not args.skip_build_scene_paks:
 
-    for common_content_dir in common_content_dirs:
+            external_content_scenes_dir = spear.path.realpath(args.external_content_dir, "Kujiale", "Scenes")
+            ignore_names = [".DS_Store"]
+            candidate_scene_ids = [ os.path.basename(x) for x in sorted(os.listdir(external_content_scenes_dir)) if x not in ignore_names ]
 
-        update_action = "remove"
-        cmd = [
-            "python",
-            spear.path.realpath(os.path.dirname(__file__), "update_symlink_for_external_content.py"),
-            "--external-content-dir", spear.path.realpath(args.external_content_dir, common_content_dir),
-            "--unreal-project-dir", unreal_project_dir,
-            "--unreal-project-content-dir", common_content_dir,
-            f"--{update_action}"]
-        spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
+            if args.scene_ids is None:
+                scene_ids = candidate_scene_ids
+            else:
+                matched_scene_ids = []
+                for candidate_scene_id in candidate_scene_ids:
+                    for arg_scene_id in args.scene_ids:
+                        if fnmatch.fnmatch(candidate_scene_id, arg_scene_id):
+                            matched_scene_ids.append(candidate_scene_id)
+                            break
+                scene_ids = matched_scene_ids
+
+            for scene_id in scene_ids:
+
+                scene_content_dir = os.path.join("Kujiale", "Scenes", scene_id)
+
+                # create symlink
+                update_symlink(unreal_project_dir=unreal_project_dir, content_dir=scene_content_dir, update_action="create")
+
+                try:
+
+                    # build pak
+
+                    # We do not want to use spear.path.realpath(...) here, because that will resolve to the directory inside the
+                    # user's external directory. Instead, we want this path to refer to the symlinked path inside the user's
+                    # Unreal project directory.
+                    cook_dirs_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_cook_dirs.csv")
+                    cook_dirs = [
+                        os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
+                        os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
+                        os.path.join(unreal_project_dir, "Content", "Kujiale", "Objects"),
+                        os.path.join(unreal_project_dir, "Content", "Kujiale", "Scenes", scene_id),
+                        os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
+                        os.path.join(unreal_project_dir, "Content", "Megascans"),
+                        os.path.join(unreal_project_dir, "Content", "MSPresets")]
+                    df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
+                    df.to_csv(cook_dirs_file, index=False)
+
+                    cook_maps_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_cook_maps.csv")
+                    cook_maps = [scene_id]
+                    df = pd.DataFrame(columns=["cook_maps"], data={"cook_maps": cook_maps})
+                    df.to_csv(cook_maps_file, index=False)
+
+                    include_assets_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_include_assets.csv")
+                    include_assets = [
+                        os.path.join("Engine", "Content", "**", "*.*"),
+                        os.path.join("Engine", "Plugins", "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "Kujiale", "Objects", "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "Kujiale", "Scenes", scene_id, "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
+                        os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
+                    df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
+                    df.to_csv(include_assets_file, index=False)
+
+                    exclude_assets_file = spear.path.realpath(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv")
+                    exclude_pak_files = [default_pak, spear.path.realpath(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak")]
+                    exclude_assets = get_assets_in_pak_files(unreal_pak_bin=unreal_pak_bin, pak_files=exclude_pak_files)
+                    df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
+                    df.to_csv(exclude_assets_file, index=False)
+
+                    pak_file = spear.path.realpath(args.paks_dir, args.version_tag, f"{scene_id}-{args.version_tag}-{platform}.pak")
+                    cmd = [
+                        "python",
+                        spear.path.realpath(os.path.dirname(__file__), "build_pak.py"),
+                        "--pak-file", pak_file,
+                        "--cook-dirs-file", cook_dirs_file,
+                        "--cook-maps-file", cook_maps_file,
+                        "--include-assets-file", include_assets_file,
+                        "--exclude-assets-file", exclude_assets_file,
+                        "--unreal-engine-dir", args.unreal_engine_dir,
+                        "--unreal-project-dir", unreal_project_dir]
+                    spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
+
+                finally:
+
+                    # remove symlink
+                    update_symlink(unreal_project_dir=unreal_project_dir, content_dir=scene_content_dir, update_action="remove")
+
+    finally:
+
+        #
+        # remove symlinks for common dirs
+        #
+
+        for common_content_dir in common_content_dirs:
+            update_symlink(unreal_project_dir=unreal_project_dir, content_dir=common_content_dir, update_action="remove")
 
     spear.log("Done.")

@@ -8,7 +8,7 @@ import spear
 import time
 
 
-_ANIMATION_DURATION_SECONDS = 10.0
+animation_duration_seconds = 10.0
 
 
 if __name__ == "__main__":
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    spear.log(f"Animating character for {_ANIMATION_DURATION_SECONDS} seconds...")
+    spear.log(f"Animating character for {animation_duration_seconds} seconds...")
 
     start_time = time.time()
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         with instance.end_frame():
             pass
 
-        if elapsed_time >= _ANIMATION_DURATION_SECONDS:
+        if elapsed_time >= animation_duration_seconds:
             break
 
     spear.log("Finished animation.")

@@ -24,29 +24,29 @@ import traceback
 # Constants
 #
 
-_ALLOWED_BUILTIN_NAMES = [
+_allowed_builtin_names = [
     "abs", "all", "any", "bool", "dict", "enumerate", "Exception", "float", "int", "isinstance", "KeyError", "len", "list", "max", "min", "range",
     "RuntimeError", "set", "sorted", "str", "sum", "tuple", "TypeError", "ValueError", "zip"]
 
-_ALLOWED_BUILTINS_STR = "{" + ", ".join([ f"'{name}': {name}" for name in _ALLOWED_BUILTIN_NAMES ]) + "}"
-_ALLOWED_SAFE_IMPORT_NAMES = ["_strptime", "copy", "datetime", "inspect", "json", "math", "numpy", "re", "time", "traceback"]
+_allowed_builtins_str = "{" + ", ".join([ f"'{name}': {name}" for name in _allowed_builtin_names ]) + "}"
+_allowed_safe_import_names = ["_strptime", "copy", "datetime", "inspect", "json", "math", "numpy", "re", "time", "traceback"]
 
 # This list must be synchronized with the banned names in docs/agents.mcp_usage.md.
-_BANNED_NAMES = {
+_banned_names = {
     "__bases__", "__builtins__", "__class__", "__code__", "__dict__", "__func__", "__getattr__", "__getattribute__", "__getitem__", "__getstate__",
     "__globals__", "__import__", "__locals__", "__reduce__", "__reduce_ex__", "__self__", "__subclasses__", "__traceback__", "__wrapped__", "bltns", "builtins",
     "compile", "delattr", "eval", "exec", "f_builtins", "f_globals", "get_default_log_enabled", "get_editor", "get_game", "getattr", "getattr_static",
     "importlib", "inspect", "log_utils", "open", "OpenLevel", "os", "pathlib", "print", "python_service", "register_log_func", "remove_path", "save", "savez",
     "savez_compressed", "savetxt", "set_default_log_enabled", "setattr", "shutil", "socket", "subprocess", "sys", "tofile", "traceback", "unregister_log_func"}
 
-_EXEC_NAMESPACE_NAMES = [
+_exec_namespace_names = [
     "after_execute", "before_execute", "copy", "datetime", "editor", "game", "instance", "json", "math", "np", "re", "spear", "time", "viewport_desc"]
 
-_SAVE_DIR = spear.path.realpath(os.path.dirname(__file__), "tmp", "spear-mcp")
-_MAX_IMAGE_DIM = 512
+_save_dir = spear.path.realpath(os.path.dirname(__file__), "tmp", "spear-mcp")
+_max_image_dim = 512
 
-_STABLE_NAME_CAMERA_SENSOR = "__SP_CAMERA_SENSOR__"
-_M_HYPERSIM_CAMERA_FROM_UNREAL_CAMERA = np.matrix([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=np.float32)
+_stable_name_camera_sensor = "__SP_CAMERA_SENSOR__"
+_M_hypersim_camera_from_unreal_camera = np.matrix([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=np.float32)
 
 
 #
@@ -54,7 +54,7 @@ _M_HYPERSIM_CAMERA_FROM_UNREAL_CAMERA = np.matrix([[0, 1, 0], [0, 0, 1], [-1, 0,
 #
 
 # {numpy, spear, unreal} get imported implicitly by PythonService so there is no need to include them here
-_EXEC_IMPORT_STR = \
+_exec_import_str = \
 """
 import copy
 import datetime
@@ -64,21 +64,21 @@ import re
 import time
 """
 
-_SAFE_IMPORT_FUNC_STR = \
+_safe_import_func_str = \
 f"""
 import builtins
 
 def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
-    if level != 0 or name.split(".")[0] not in {_ALLOWED_SAFE_IMPORT_NAMES!r}:
-        message = f"ERROR: import rejected: name={{name!r}}, level={{level}}, fromlist={{fromlist!r}}. When using the spear-mcp __import__ function, the only allowed imports are {_ALLOWED_SAFE_IMPORT_NAMES}."
+    if level != 0 or name.split(".")[0] not in {_allowed_safe_import_names!r}:
+        message = f"ERROR: import rejected: name={{name!r}}, level={{level}}, fromlist={{fromlist!r}}. When using the spear-mcp __import__ function, the only allowed imports are {_allowed_safe_import_names}."
         spear.log(message)
         raise ImportError(message)
     return builtins.__import__(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
 """
 
-_EXEC_NAMESPACE_UPDATE_STR = \
+_exec_namespace_update_str = \
 f"""
-_exec_namespace["__builtins__"] = {_ALLOWED_BUILTINS_STR}
+_exec_namespace["__builtins__"] = {_allowed_builtins_str}
 _exec_namespace["__builtins__"]["__import__"] = _safe_import
 _exec_namespace["copy"] = copy
 _exec_namespace["datetime"] = datetime
@@ -90,15 +90,15 @@ _exec_namespace["spear"] = spear
 _exec_namespace["time"] = time
 """
 
-_EXEC_NAMESPACE_INITIALIZE_STR_EDITOR = \
+_exec_namespace_initialize_str_editor = \
 f"""
 if "_exec_namespace" not in globals():
     _exec_namespace = {{}}
 """
 
-_EXEC_NAMESPACE_UPDATE_STR_EDITOR = \
+_exec_namespace_update_str_editor = \
 f"""
-{_EXEC_NAMESPACE_UPDATE_STR}
+{_exec_namespace_update_str}
 _exec_namespace["unreal"] = unreal
 """
 
@@ -107,8 +107,8 @@ _exec_namespace["unreal"] = unreal
 # Deferred imports
 #
 
-exec(_EXEC_IMPORT_STR)
-exec(_SAFE_IMPORT_FUNC_STR)
+exec(_exec_import_str)
+exec(_safe_import_func_str)
 
 
 #
@@ -327,17 +327,17 @@ def _initialize_instance():
 
 def _initialize_namespace():
 
-    exec(_EXEC_NAMESPACE_UPDATE_STR)
+    exec(_exec_namespace_update_str)
     _exec_namespace["instance"] = _instance
     _exec_namespace["game"] = _game
     _exec_namespace["editor"] = _editor
 
     if _editor is not None:
         with _instance.begin_frame():
-            _editor.python_service.execute_string(string=_EXEC_IMPORT_STR)
-            _editor.python_service.execute_string(string=_SAFE_IMPORT_FUNC_STR)
-            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_INITIALIZE_STR_EDITOR)
-            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_UPDATE_STR_EDITOR)
+            _editor.python_service.execute_string(string=_exec_import_str)
+            _editor.python_service.execute_string(string=_safe_import_func_str)
+            _editor.python_service.execute_string(string=_exec_namespace_initialize_str_editor)
+            _editor.python_service.execute_string(string=_exec_namespace_update_str_editor)
         with _instance.end_frame():
             pass
 
@@ -358,7 +358,7 @@ def _initialize_actors():
 
         # find and remove leaked actors
 
-        for actor in world_scoped_services.unreal_service.find_actors_by_name(actor_name=_STABLE_NAME_CAMERA_SENSOR, uclass="AActor"):
+        for actor in world_scoped_services.unreal_service.find_actors_by_name(actor_name=_stable_name_camera_sensor, uclass="AActor"):
             world_scoped_services.unreal_service.destroy_actor(actor=actor)
 
         # initialize segmentation service
@@ -372,25 +372,25 @@ def _initialize_actors():
         viewport_size_x = viewport_desc["viewport_size_x"]
         viewport_size_y = viewport_desc["viewport_size_y"]
         if viewport_size_x >= viewport_size_y:
-            image_width = _MAX_IMAGE_DIM
-            image_height = int(_MAX_IMAGE_DIM * viewport_size_y / viewport_size_x)
+            image_width = _max_image_dim
+            image_height = int(_max_image_dim * viewport_size_y / viewport_size_x)
         else:
-            image_height = _MAX_IMAGE_DIM
-            image_width = int(_MAX_IMAGE_DIM * viewport_size_x / viewport_size_y)
+            image_height = _max_image_dim
+            image_width = int(_max_image_dim * viewport_size_x / viewport_size_y)
 
         # spawn camera sensor
 
         bp_cam_uclass = world_scoped_services.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         world_desc["camera_sensor"] = world_scoped_services.unreal_service.spawn_actor(uclass=bp_cam_uclass, spawn_parameters={"ObjectFlags": ["RF_Transient"]})
-        world_scoped_services.unreal_service.set_stable_name_for_actor(actor=world_desc["camera_sensor"], stable_name=_STABLE_NAME_CAMERA_SENSOR)
+        world_scoped_services.unreal_service.set_stable_name_for_actor(actor=world_desc["camera_sensor"], stable_name=_stable_name_camera_sensor)
 
         # get camera components
         world_desc["camera_components"] = {
-            "final_tone_curve_hdr": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D"),
-            "object_ids_uint8": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.sp_object_ids_uint8_", uclass="USpSceneCaptureComponent2D"),
-            "sp_depth_meters": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.sp_depth_meters_", uclass="USpSceneCaptureComponent2D"),
-            "sp_world_position": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.sp_world_position_", uclass="USpSceneCaptureComponent2D"),
-            "world_normal": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.world_normal_", uclass="USpSceneCaptureComponent2D")}
+            "final_tone_curve_hdr": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.final_tone_curve_hdr", uclass="USpSceneCaptureComponent2D"),
+            "object_ids_uint8": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.sp_object_ids_uint8", uclass="USpSceneCaptureComponent2D"),
+            "sp_depth_meters": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.sp_depth_meters", uclass="USpSceneCaptureComponent2D"),
+            "sp_world_position": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.sp_world_position", uclass="USpSceneCaptureComponent2D"),
+            "world_normal": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.world_normal", uclass="USpSceneCaptureComponent2D")}
 
         # align camera with viewport and configure components
         world_scoped_services.viewport_service.align_camera_with_viewport(
@@ -468,16 +468,16 @@ def _get_image_data(world_desc, key):
 
     R_world_from_unreal_camera = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=camera_rotation, as_matrix=True)
     R_unreal_camera_from_world = R_world_from_unreal_camera.T
-    M_hypersim_camera_from_world = _M_HYPERSIM_CAMERA_FROM_UNREAL_CAMERA*R_unreal_camera_from_world
+    M_hypersim_camera_from_world = _M_hypersim_camera_from_unreal_camera*R_unreal_camera_from_world
 
     h, w = world_normal.shape[:2]
 
-    M_world_normals = np.matrix(world_normal[:, :, :3].reshape(-1, 3)).T
+    M_world_normals = np.matrix(world_normal.reshape(-1, 3)).T
     M_hypersim_camera_normals = M_hypersim_camera_from_world*M_world_normals
     camera_normal = M_hypersim_camera_normals.T.A.reshape(h, w, 3).astype(np.float32)
 
     t_camera_location = spear.math.to_numpy_array_from_spear_vector(spear_vector=camera_location, as_matrix=True)
-    M_world_positions = np.matrix(world_position[:, :, :3].reshape(-1, 3)).T
+    M_world_positions = np.matrix(world_position.reshape(-1, 3)).T
     M_hypersim_camera_positions = M_hypersim_camera_from_world*(M_world_positions - t_camera_location)
     camera_position = M_hypersim_camera_positions.T.A.reshape(h, w, 3).astype(np.float32)
 
@@ -498,7 +498,7 @@ def _get_image_data(world_desc, key):
 
 def _save_images(world_desc, key):
 
-    save_dir = spear.path.realpath(_SAVE_DIR, key)
+    save_dir = spear.path.realpath(_save_dir, key)
     os.makedirs(save_dir, exist_ok=True)
 
     data = world_desc[key]
@@ -517,7 +517,7 @@ def _save_images(world_desc, key):
     cv2.imwrite(spear.path.realpath(save_dir, "depth_meters.png"), cv2.applyColorMap((depth_normalized * 255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS))
 
     # camera_normal (RGB in [0, 1] -> BGR uint8)
-    camera_normal_image = np.clip((1.0 + camera_normal[:, :, :3]) / 2.0, 0.0, 1.0)
+    camera_normal_image = np.clip((1.0 + camera_normal) / 2.0, 0.0, 1.0)
     cv2.imwrite(spear.path.realpath(save_dir, "camera_normal.png"), (camera_normal_image * 255.0).astype(np.uint8)[:, :, [2,1,0]])
 
     # camera_position: per-channel median -> 0.5 (middle grey), uniform K = min(2 * max_channel_abs_dev, 750)
@@ -565,10 +565,10 @@ def _validate_code(code):
         if isinstance(node, ast.ImportFrom):
             _log(f"ERROR: Import statement not allowed: from {node.module} import ...")
             return False
-        if isinstance(node, ast.Name) and node.id in _BANNED_NAMES:
+        if isinstance(node, ast.Name) and node.id in _banned_names:
             _log(f"ERROR: Name not allowed: {node.id}")
             return False
-        if isinstance(node, ast.Attribute) and node.attr in _BANNED_NAMES:
+        if isinstance(node, ast.Attribute) and node.attr in _banned_names:
             _log(f"ERROR: Attribute access not allowed: .{node.attr}")
             return False
 
@@ -593,12 +593,12 @@ def _log_status():
         _log(f"Editor: {'not ' if _editor is None else ''}available.")
 
     # available namespace variables
-    names = [ name for name in _EXEC_NAMESPACE_NAMES if name in _exec_namespace ]
+    names = [ name for name in _exec_namespace_names if name in _exec_namespace ]
     _log(f"Available variables: {', '.join(names)}")
 
     for key, populated in [("before_execute", _before_execute_populated), ("after_execute", _after_execute_populated)]:
         state = "up-to-date" if populated else "stale"
-        _log(f"Available images: {_SAVE_DIR}/{key}/*.png ({state})")
+        _log(f"Available images: {_save_dir}/{key}/*.png ({state})")
 
 
 #
@@ -606,8 +606,8 @@ def _log_status():
 #
 
 _log_lines = []
-_log_file = spear.path.realpath(_SAVE_DIR, "mcp_server.log")
-_log_file_prev = spear.path.realpath(_SAVE_DIR, "mcp_server.prev.log")
+_log_file = spear.path.realpath(_save_dir, "mcp_server.log")
+_log_file_prev = spear.path.realpath(_save_dir, "mcp_server.prev.log")
 
 def _rotate_log_file():
     os.makedirs(os.path.dirname(_log_file), exist_ok=True)

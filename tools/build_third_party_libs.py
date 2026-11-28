@@ -4,7 +4,6 @@
 #
 
 import argparse
-import glob
 import os
 import shutil
 import spear
@@ -55,7 +54,7 @@ if __name__ == "__main__":
 
         platform_dir = "Win64"
 
-        # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
+        # optimize aggressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
         common_cxx_flags = "/O2 /EHsc /GR-"
         boost_cxx_flags = common_cxx_flags
         cmake_cxx_flags = common_cxx_flags
@@ -81,7 +80,7 @@ if __name__ == "__main__":
 
         platform_dir = "Mac"
 
-        common_cxx_flags = "-O3 -stdlib=libc++ -mmacosx-version-min=10.13"
+        common_cxx_flags = f"-O3 -stdlib=libc++ -mmacosx-version-min={spear.tools.macos_deployment_target}"
         boost_cxx_flags = common_cxx_flags
         cmake_cxx_flags = common_cxx_flags
 
@@ -94,26 +93,12 @@ if __name__ == "__main__":
         assert args.cxx_compiler is None
 
         unreal_engine_dir = spear.path.realpath(args.unreal_engine_dir)
-
-        linux_clang_path_template = spear.path.realpath(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*")
-        linux_clang_paths = glob.glob(linux_clang_path_template)
-        assert len(linux_clang_paths) == 1
-        linux_clang_path = linux_clang_paths[0]
-
-        spear.log("Found Unreal clang: ", linux_clang_path)
-
-        linux_clang_bin_dir      = spear.path.realpath(linux_clang_path, "x86_64-unknown-linux-gnu", "bin")
-        linux_libcpp_include_dir = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
-
-        assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
-
-        spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
+        unreal_linux_toolchain = spear.tools.get_unreal_linux_toolchain(unreal_engine_dir=unreal_engine_dir)
+        linux_libcpp_include_dir = unreal_linux_toolchain["libcpp_include_dir"]
 
         boost_toolset = "clang"
         boost_toolset_version = ""
-        # We don't use spear.path.realpath(...) here, because clang++ is typically a symlink to clang, and clang decides
-        # whether to compile C or C++ based on the name it is invoked with.
-        cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
+        cxx_compiler = unreal_linux_toolchain["cxx_compiler"]
 
         boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} : {cxx_compiler} ;\n"
 
@@ -271,7 +256,7 @@ if __name__ == "__main__":
             cmd = [
                 "cmake",
                 f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
-                "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+                f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
                 f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
                 f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
                 os.path.join("..", "..")]
@@ -339,7 +324,6 @@ if __name__ == "__main__":
 
         elif sys.platform == "linux":
 
-            # -lpthread needed on some Linux environments
             cmd = [
                 "cmake",
                 f"-DCMAKE_CXX_COMPILER={cxx_compiler}",

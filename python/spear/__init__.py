@@ -55,9 +55,9 @@ from .utils.func_utils import CallSyncEntryPointCaller, CaseInsensitiveDict, Edi
 
 # import entire utils files into child namespaces
 from .utils import image_utils as image
+from .utils import json_utils as json
 from .utils import math_utils as math
 from .utils import path_utils as path
-from .utils import pipeline_utils as pipeline
 from .utils import tool_utils as tools
 
 # conditional imports

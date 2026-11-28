@@ -80,7 +80,7 @@ image_descs = \
 [
     {
         "name": "final_tone_curve_hdr",
-        "component_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "component_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "ust_source_component_name": None,
         "read_pixels_array_name": "data",
         "save_raw_data": False,
@@ -89,8 +89,8 @@ image_descs = \
     },
     {
         "name": "camera_normal",
-        "component_name": "DefaultSceneRoot.world_normal_",
-        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "component_name": "DefaultSceneRoot.world_normal",
+        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "read_pixels_array_name": "WorldNormal",
         "save_raw_data": True,
         "channels": [0,1,2], # RGB (drop A)
@@ -98,8 +98,8 @@ image_descs = \
     },
     {
         "name": "diffuse_color",
-        "component_name": "DefaultSceneRoot.diffuse_color_",
-        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "component_name": "DefaultSceneRoot.diffuse_color",
+        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "read_pixels_array_name": "DiffuseColor",
         "save_raw_data": True,
         "channels": [0,1,2], # RGB (drop A)
@@ -107,8 +107,8 @@ image_descs = \
     },
     {
         "name": "post_process_input_2",
-        "component_name": "DefaultSceneRoot.diffuse_and_specular_post_process_input_2_",
-        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "component_name": "DefaultSceneRoot.diffuse_and_specular_post_process_input_2",
+        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "read_pixels_array_name": "PostProcessInput2",
         "save_raw_data": True,
         "channels": [0,1,2], # RGB (drop A)
@@ -116,8 +116,8 @@ image_descs = \
     },
     {
         "name": "sp_depth_meters",
-        "component_name": "DefaultSceneRoot.sp_depth_meters_",
-        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "component_name": "DefaultSceneRoot.sp_depth_meters",
+        "ust_source_component_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "read_pixels_array_name": "SpDepthMeters",
         "save_raw_data": True,
         "channels": [0], # R (drop GBA if present)
@@ -138,7 +138,7 @@ def save_images(camera_pose, arrays):
         data = arrays[image_desc["name"]]
         image_file = spear.path.realpath(images_dir, image_desc["name"], f"{camera_pose['index']:04d}.png")
         image = image_desc["visualize_func"](data=data, R_camera_from_world=R_camera_from_world)
-        cv2.imwrite(image_file, image)
+        spear.image.save_image(image=image, image_file=image_file)
         if image_desc["save_raw_data"]:
             raw_data_file = spear.path.realpath(images_dir, image_desc["name"], f"{camera_pose['index']:04d}.npy")
             np.save(raw_data_file, data.astype(np.float16))
@@ -378,6 +378,9 @@ if __name__ == "__main__":
             component.Terminate()
         game.unreal_service.destroy_actor(actor=bp_camera_sensor)
 
-    # instance.close()
+        # restore rendering quality
+        game.rendering_quality_service.restore_rendering_quality()
+
+    instance.close()
 
     spear.log("Done.")

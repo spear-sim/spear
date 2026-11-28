@@ -52,7 +52,7 @@ def process_scene():
     assert os.path.exists(free_space_camera_paths_file)
     with h5py.File(free_space_camera_paths_file, "r") as f:
         positions = f["camera_path_positions"][:]
-        camera_rotations = f["camera_path_orientations"][:]
+        camera_path_rotations = f["camera_path_rotations"][:]
 
     # Draw each camera path as a faint polyline (consecutive samples are joined by an edge).
     path_edge_indices = np.column_stack([np.arange(positions.shape[1] - 1), np.arange(1, positions.shape[1])])
@@ -75,9 +75,9 @@ def process_scene():
     for path_index in range(positions.shape[0]):
         for frame_index in frame_indices:
             frame_positions.append(positions[path_index][frame_index])
-            frame_x_axes.append(camera_rotations[path_index][frame_index][:,0])
-            frame_y_axes.append(camera_rotations[path_index][frame_index][:,1])
-            frame_z_axes.append(camera_rotations[path_index][frame_index][:,2])
+            frame_x_axes.append(camera_path_rotations[path_index][frame_index][:,0])
+            frame_y_axes.append(camera_path_rotations[path_index][frame_index][:,1])
+            frame_z_axes.append(camera_path_rotations[path_index][frame_index][:,2])
     frame_positions = np.array(frame_positions)
     frame_x_axes = np.array(frame_x_axes)
     frame_y_axes = np.array(frame_y_axes)

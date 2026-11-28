@@ -66,18 +66,18 @@ if __name__ == "__main__":
     ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
 
     has_credential_id = None
-    crediential_id = None
+    credential_id = None
     for line in ps.stdout:
         spear.log_no_prefix(line)
         if has_credential_id is None and "EVCS Credential ID(s):" in line:
             has_credential_id = True
         if "- " in line:
-            crediential_id = line.split("- ")[1].strip()
+            credential_id = line.split("- ")[1].strip()
     return_code = ps.wait()
     ps.stdout.close()
     assert return_code == 0
     assert has_credential_id
-    assert crediential_id is not None
+    assert credential_id is not None
 
     for sign_file in sign_files:
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         cmd = [
             "CodeSignTool.bat",
             "sign",
-            f"-credential_id={crediential_id}",
+            f"-credential_id={credential_id}",
             f"-username={args.ssl_username}",
             f"-password={args.ssl_password}",
             f"-totp_secret={args.ssl_totp_secret}",

@@ -21,8 +21,7 @@ engine_show_flag_settings = {}
 
 # diffuse_color
 
-engine_show_flag_settings["diffuse_color"] = []
-engine_show_flag_settings["diffuse_color"] = engine_show_flag_settings["diffuse_color"] + \
+engine_show_flag_settings["diffuse_color"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -70,8 +69,7 @@ engine_show_flag_settings["diffuse_color"] = engine_show_flag_settings["diffuse_
 
 # lighting_only_diffuse_color == diffuse_color + LightingOnlyOverride=True
 
-engine_show_flag_settings["lighting_only_diffuse_color"] = []
-engine_show_flag_settings["lighting_only_diffuse_color"] = engine_show_flag_settings["lighting_only_diffuse_color"] + \
+engine_show_flag_settings["lighting_only_diffuse_color"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -120,8 +118,7 @@ engine_show_flag_settings["lighting_only_diffuse_color"] = engine_show_flag_sett
 
 # lighting_only_path_tracing_radiance
 
-engine_show_flag_settings["lighting_only_path_tracing_radiance"] = []
-engine_show_flag_settings["lighting_only_path_tracing_radiance"] = engine_show_flag_settings["lighting_only_path_tracing_radiance"] + \
+engine_show_flag_settings["lighting_only_path_tracing_radiance"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
@@ -133,8 +130,7 @@ engine_show_flag_settings["lighting_only_path_tracing_radiance"] = engine_show_f
 
 # enable_path_tracing
 
-engine_show_flag_settings["enable_path_tracing"] = []
-engine_show_flag_settings["enable_path_tracing"] = engine_show_flag_settings["enable_path_tracing"] + \
+engine_show_flag_settings["enable_path_tracing"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
 ]
@@ -146,7 +142,7 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "final_tone_curve_hdr_",
+            "name": "final_tone_curve_hdr",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -158,7 +154,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "diffuse_color_",
+            "name": "diffuse_color",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -171,7 +167,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "diffuse_only_path_tracing_radiance_",
+            "name": "diffuse_only_path_tracing_radiance",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -197,7 +193,7 @@ blueprint_desc = \
             ]
         },
         {
-            "name": "diffuse_and_specular_path_tracing_radiance_",
+            "name": "diffuse_and_specular_path_tracing_radiance",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -210,7 +206,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
         },
         {
-            "name": "lighting_only_diffuse_color_",
+            "name": "lighting_only_diffuse_color",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -223,7 +219,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
         },
         {
-            "name": "lighting_only_path_tracing_radiance_",
+            "name": "lighting_only_path_tracing_radiance",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -236,7 +232,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
         },
         {
-            "name": "specular_only_path_tracing_radiance_",
+            "name": "specular_only_path_tracing_radiance",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -289,7 +285,7 @@ if __name__ == "__main__":
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component_"
+    component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(

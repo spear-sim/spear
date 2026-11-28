@@ -27,32 +27,8 @@ unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsyst
 
 editor_world = unreal_editor_subsystem.get_editor_world()
 
-replace_chars_map = {
-    "-": "_",
-    " ": "_",
-    ".": "_",
-    ",": "_",
-    "'": "_"}
-
-content_path_extra_chars = 6                             # the Unreal Editor adds up to this many characters when reporting the length of paths
-max_content_path_length = 210 - content_path_extra_chars # Unreal's stated maximum path length is 210, but we need to account for the fact that the Unreal Editor adds a few chars when reporting path lengths
-num_content_dirs_after_base_dir = 2                      # assume we will be creating Unreal paths of the form /content_base_dir/sub_dir_1/sub_dir_2/fbx_name.fbx_name
-
-
-def truncate_from_middle(string, max_length):
-    truncate_string = "__"
-    if len(string) <= max_length:
-        return string
-    elif max_length <= len(truncate_string):
-        return truncate_string[:max_length]
-    else:
-        return string[:max_length//2-1] + truncate_string + string[-max_length//2+1:]
-
-def replace_chars(string, replace_chars_map):
-    return_value = string
-    for k, v in replace_chars_map.items():
-        return_value = return_value.replace(k, v)
-    return return_value
+user_replace_chars_map = {"-": "_"}
+num_content_dirs_after_base_dir = 2 # assume we will be creating Unreal paths of the form /content_base_dir/sub_dir_1/sub_dir_2/fbx_name.fbx_name
 
 
 if __name__ == "__main__":
@@ -63,6 +39,7 @@ if __name__ == "__main__":
     # assume there is a top-level filesystem directory that contains subdirectories that contain FBX files
 
     filesystem_sub_dirs = [ d for d in sorted(os.listdir(args.filesystem_base_dir)) if d != ".DS_Store" ]
+    assert len(filesystem_sub_dirs) > 0
 
     # allow importing in batches because importing content leaks memory
 
@@ -73,6 +50,8 @@ if __name__ == "__main__":
     end_index = len(filesystem_sub_dirs) - 1
     if args.num_indices is not None:
         end_index = min(end_index, begin_index + args.num_indices - 1)
+
+    assert begin_index <= end_index
 
     # import each directory
 
@@ -89,16 +68,17 @@ if __name__ == "__main__":
         fbx_files = [ f for f in sorted(os.listdir(spear.path.realpath(args.filesystem_base_dir, filesystem_sub_dir))) if f.lower().endswith(".fbx") ]
         for fbx_file in fbx_files:
 
-            max_content_dir_length = (max_content_path_length - len(args.content_base_dir) - 2*(len("FbxScene_") + len(fbx_file) - len(".fbx"))) // num_content_dirs_after_base_dir
-            spear.log(f"    Truncating content subdirectories to {max_content_dir_length} chars to stay within Unreal's limits for content paths...")
+            max_content_dir_length = (spear.path.get_max_content_path_length() - len(args.content_base_dir) - 2*(len("FbxScene_") + len(fbx_file) - len(".fbx"))) // num_content_dirs_after_base_dir
+            spear.log(f"        Truncating content subdirectories to {max_content_dir_length} chars to stay within Unreal's limits for content paths...")
 
-            fbx_content_subdir = truncate_from_middle(string=replace_chars(string=filesystem_sub_dir, replace_chars_map=replace_chars_map), max_length=max_content_dir_length)
-            fbx_content_name = truncate_from_middle(string=replace_chars(string=os.path.splitext(fbx_file)[0], replace_chars_map=replace_chars_map), max_length=max_content_dir_length)
+            fbx_content_subdir = spear.path.get_content_name_from_filesystem_name(filesystem_name=filesystem_sub_dir, user_replace_chars_map=user_replace_chars_map, max_length=max_content_dir_length)
+            fbx_content_name = spear.path.get_content_name_from_filesystem_name(filesystem_name=os.path.splitext(fbx_file)[0], user_replace_chars_map=user_replace_chars_map, max_length=max_content_dir_length)
             fbx_content_dir = posixpath.join(args.content_base_dir, fbx_content_subdir, fbx_content_name)
-            blueprint_content_path = posixpath.join(fbx_content_dir, "FbxScene_" + os.path.splitext(fbx_file)[0])
+            # Unreal names the blueprint after the FBX file, replacing chars that are invalid in content paths, so we do the same.
+            blueprint_content_path = posixpath.join(fbx_content_dir, "FbxScene_" + spear.path.get_content_name_from_filesystem_name(filesystem_name=os.path.splitext(fbx_file)[0]))
 
             spear.log(f"    Blueprint path ({len(blueprint_content_path)} chars): {blueprint_content_path}")
-            assert len(blueprint_content_path) <= max_content_path_length
+            assert len(blueprint_content_path) <= spear.path.get_max_content_path_length()
 
             if args.skip_if_exists and unreal.EditorAssetLibrary.does_directory_exist(directory_path=fbx_content_dir):
                 spear.log("        Directory exists, skipping: ", fbx_content_dir)

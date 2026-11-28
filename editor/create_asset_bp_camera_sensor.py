@@ -21,24 +21,21 @@ engine_show_flag_settings = {}
 
 # final_tone_curve_hdr
 
-engine_show_flag_settings["final_tone_curve_hdr"] = []
-engine_show_flag_settings["final_tone_curve_hdr"] = engine_show_flag_settings["final_tone_curve_hdr"] + \
+engine_show_flag_settings["final_tone_curve_hdr"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)
 ]
 
 # diffuse_and_specular
 
-engine_show_flag_settings["diffuse_and_specular"] = []
-engine_show_flag_settings["diffuse_and_specular"] = engine_show_flag_settings["diffuse_and_specular"] + \
+engine_show_flag_settings["diffuse_and_specular"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
 ]
 
 # diffuse_only
 
-engine_show_flag_settings["diffuse_only"] = []
-engine_show_flag_settings["diffuse_only"] = engine_show_flag_settings["diffuse_only"] + \
+engine_show_flag_settings["diffuse_only"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="Specular", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
@@ -46,8 +43,7 @@ engine_show_flag_settings["diffuse_only"] = engine_show_flag_settings["diffuse_o
 
 # lighting_only
 
-engine_show_flag_settings["lighting_only"] = []
-engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
+engine_show_flag_settings["lighting_only"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
@@ -55,8 +51,7 @@ engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting
 
 # lighting_only_diffuse_color == disable_all_except_post_processing_material + LightingOnlyOverride=True
 
-engine_show_flag_settings["lighting_only_diffuse_color"] = []
-engine_show_flag_settings["lighting_only_diffuse_color"] = engine_show_flag_settings["lighting_only_diffuse_color"] + \
+engine_show_flag_settings["lighting_only_diffuse_color"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -119,8 +114,7 @@ engine_show_flag_settings["lighting_only_diffuse_color"] = engine_show_flag_sett
 #     Lighting Features Show Flags, Post Processing Show Flags, Hidden Show Flags
 #
 
-engine_show_flag_settings["disable_all"] = []
-engine_show_flag_settings["disable_all"] = engine_show_flag_settings["disable_all"] + \
+engine_show_flag_settings["disable_all"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -170,8 +164,7 @@ engine_show_flag_settings["disable_all"] = engine_show_flag_settings["disable_al
 
 # disable_all_except_post_processing_material
 
-engine_show_flag_settings["disable_all_except_post_processing_material"] = []
-engine_show_flag_settings["disable_all_except_post_processing_material"] = engine_show_flag_settings["disable_all_except_post_processing_material"] + \
+engine_show_flag_settings["disable_all_except_post_processing_material"] = \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -224,7 +217,7 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "final_tone_curve_hdr_",
+            "name": "final_tone_curve_hdr",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -238,7 +231,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "custom_stencil_",
+            "name": "custom_stencil",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -251,7 +244,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R8
         },
         {
-            "name": "diffuse_and_specular_post_process_input_2_",
+            "name": "diffuse_and_specular_post_process_input_2",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -266,7 +259,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "diffuse_color_",
+            "name": "diffuse_color",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -279,7 +272,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "diffuse_only_post_process_input_2_",
+            "name": "diffuse_only_post_process_input_2",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -294,7 +287,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "lighting_only_diffuse_color_",
+            "name": "lighting_only_diffuse_color",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -307,7 +300,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "lighting_only_post_process_input_2_",
+            "name": "lighting_only_post_process_input_2",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
@@ -322,7 +315,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "material_ao_",
+            "name": "material_ao",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -335,7 +328,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "metallic_",
+            "name": "metallic",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -348,7 +341,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "roughness_",
+            "name": "roughness",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -361,7 +354,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "scene_depth_",
+            "name": "scene_depth",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -374,7 +367,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "sp_depth_meters_",
+            "name": "sp_depth_meters",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -387,7 +380,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "sp_object_ids_float16_",
+            "name": "sp_object_ids_float16",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -400,7 +393,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "sp_object_ids_uint8_",
+            "name": "sp_object_ids_uint8",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -419,7 +412,7 @@ blueprint_desc = \
             "texture_render_target_gamma": 1.0
         },
         {
-            "name": "sp_unlit_float16_",
+            "name": "sp_unlit_float16",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -431,7 +424,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "sp_unlit_uint8_",
+            "name": "sp_unlit_uint8",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -449,7 +442,7 @@ blueprint_desc = \
             "texture_render_target_gamma": 1.0
         },
         {
-            "name": "sp_view_normal_",
+            "name": "sp_view_normal",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -462,7 +455,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "sp_world_position_",
+            "name": "sp_world_position",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -475,7 +468,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
-            "name": "specular_for_lighting_",
+            "name": "specular_for_lighting",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -488,7 +481,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "world_normal_",
+            "name": "world_normal",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -534,7 +527,7 @@ if __name__ == "__main__":
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component_"
+    component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(

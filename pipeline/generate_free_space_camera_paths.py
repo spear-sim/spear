@@ -41,7 +41,7 @@ def process_scene():
         path_point_times = f["path_point_times"][:]
     with h5py.File(free_space_camera_keyframes_file, "r") as f:
         camera_keyframe_times = f["camera_keyframe_times"][:]
-        camera_keyframe_rotations = f["camera_keyframe_orientations"][:]
+        camera_keyframe_rotations = f["camera_keyframe_rotations"][:]
     assert path_points.shape[0] == camera_keyframe_rotations.shape[0]
 
     num_keyframes = camera_keyframe_rotations.shape[1]
@@ -53,7 +53,7 @@ def process_scene():
     # are rotations (not free vectors) and is smooth -- continuous in both angular velocity and acceleration -- rather
     # than the piecewise-constant angular velocity of spherical linear interpolation, which would change the camera's
     # rotation rate abruptly at each keyframe.
-    camera_rotations = []
+    camera_path_rotations = []
     for path_index in range(path_points.shape[0]):
 
         # Apply a random roll about each keyframe's look (+X) direction. Composing each keyframe rotation on the right
@@ -64,9 +64,9 @@ def process_scene():
         # Interpolate the keyframe rotations to the path sample times with a cubic rotation spline. The keyframe times
         # span the whole path from 0 to 1, so every sample time lies within the interpolation range.
         interpolated_rotations = scipy.spatial.transform.RotationSpline(camera_keyframe_times[path_index], keyframe_rotations)(path_point_times[path_index])
-        camera_rotations.append(interpolated_rotations.as_matrix())
+        camera_path_rotations.append(interpolated_rotations.as_matrix())
 
-    camera_rotations = np.array(camera_rotations)
+    camera_path_rotations = np.array(camera_path_rotations)
 
     # Save each camera path ready to visualize and render: the position and camera-to-world rotation matrix at each
     # sample, along with the sample's normalized time. The positions and times are the planned path's; the rotations
@@ -80,7 +80,7 @@ def process_scene():
     with h5py.File(free_space_camera_paths_file, "w") as f:
         f.create_dataset("camera_path_times", data=path_point_times)
         f.create_dataset("camera_path_positions", data=path_points)
-        f.create_dataset("camera_path_orientations", data=camera_rotations)
+        f.create_dataset("camera_path_rotations", data=camera_path_rotations)
 
     spear.log("Done.")
 

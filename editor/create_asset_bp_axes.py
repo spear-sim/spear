@@ -15,7 +15,7 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "origin_",
+            "name": "origin",
             "static_mesh_path": "/Engine/BasicShapes/Sphere.Sphere",
             "material_path": "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial",
             "location": {"x": 0.0, "y": 0.0, "z": 0.0},
@@ -23,7 +23,7 @@ blueprint_desc = \
             "scale3d": {"x": 0.05, "y": 0.05, "z": 0.05}
         },
         {
-            "name": "x_axis_",
+            "name": "x_axis",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpContent/Materials/MI_BasicShapeMaterial_Inst_Red.MI_BasicShapeMaterial_Inst_Red",
             "location": {"x": 12.5, "y": 0.0, "z": 0.0},
@@ -31,7 +31,7 @@ blueprint_desc = \
             "scale3d": {"x": 0.025, "y": 0.025, "z": 0.25}
         },
         {
-            "name": "y_axis_",
+            "name": "y_axis",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpContent/Materials/MI_BasicShapeMaterial_Inst_Green.MI_BasicShapeMaterial_Inst_Green",
             "location": {"x": 0.0, "y": 12.5, "z": 0.0},
@@ -39,7 +39,7 @@ blueprint_desc = \
             "scale3d": {"x": 0.025, "y": 0.025, "z": 0.25}
         },
         {
-            "name": "z_axis_",
+            "name": "z_axis",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpContent/Materials/MI_BasicShapeMaterial_Inst_Blue.MI_BasicShapeMaterial_Inst_Blue",
             "location": {"x": 0.0, "y": 0.0, "z": 12.5},
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component_"
+    component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(

@@ -122,7 +122,7 @@ if __name__ == "__main__":
         with instance.end_frame(single_step=True):
             game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
-    # set throttle to 1.0 and steering to -1.0 (values will persist across frames until reset)
+    # set steering to -1.0 (value will persist across frames until reset)
     with instance.begin_frame():
         game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 

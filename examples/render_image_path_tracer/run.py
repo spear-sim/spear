@@ -12,7 +12,7 @@ import os
 import shutil
 import spear
 
-component_name = "final_tone_curve_hdr_"
+component_name = "final_tone_curve_hdr"
 
 user_scene_texture_names = [
     "PathTracingAlbedo",
@@ -207,6 +207,8 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         data_bundle = component.read_pixels()
 
+    instance.step() # needed to get out of single_step=True mode
+
     for name, data in data_bundle["arrays"].items():
         image_file = spear.path.realpath(images_dir, f"{component_name}.{name}.png")
         image = visualize_funcs[name](data=data)
@@ -216,8 +218,7 @@ if __name__ == "__main__":
             image = image[:, :, [2,1,0]] # RGB -> BGR
         elif image.ndim == 2:
             image = cv2.applyColorMap(image, cv2.COLORMAP_VIRIDIS) # match matplotlib's default colormap for single-channel images
-        spear.log("Saving image: ", image_file)
-        cv2.imwrite(image_file, image)
+        spear.image.save_image(image=image, image_file=image_file)
 
     # terminate actors and components
     with instance.begin_frame():

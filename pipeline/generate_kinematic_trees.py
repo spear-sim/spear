@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import spear
+import unreal_geometry_utils
 
 
 parser = argparse.ArgumentParser()
@@ -14,10 +15,6 @@ parser.add_argument("--pipeline-dir", required=True)
 args = parser.parse_args()
 
 assert os.path.exists(args.pipeline_dir)
-
-scene_component_classes = ["SceneComponent", "StaticMeshComponent"]
-static_mesh_component_classes = ["StaticMeshComponent"]
-physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 
 
 def process_scene():
@@ -75,10 +72,10 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
     spear.log(f"{log_prefix_str}Getting kinematic tree node for component: {component_name}")
 
     # Only process SceneComponents with no absolute transforms.
-    if component_desc["class"] in scene_component_classes and not _any_component_transform_absolute(component_desc=component_desc):
+    if component_desc["class"] in unreal_geometry_utils.scene_component_classes and not _any_component_transform_absolute(component_desc=component_desc):
 
         transform_parent_component_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
-            spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
+            spear.json.to_spear_transform_from_json_component(json_component=component_desc)
 
         transform_node_from_current_component = spear.math.compose_component_transforms(
             transforms=[transform_node_from_parent_component, transform_parent_component_from_current_component],
@@ -93,7 +90,7 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
             transform_node_from_current_component = spear.math.get_identity_transform()
 
         # Only attempt to add geometry to the current node if the current component is a StaticMeshComponent...
-        if component_desc["class"] in static_mesh_component_classes:
+        if component_desc["class"] in unreal_geometry_utils.static_mesh_component_classes:
 
             # ...that refers to a non-null StaticMesh asset.
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
@@ -108,14 +105,16 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
 
                 kinematic_tree_node["static_mesh_components"][component_name] = component_desc
 
-        # Recurse for each child component.
+        # Partition the child components into PhysicsConstraintComponents (ignoring PhysicsConstraintComponents
+        # with absolute transforms) and all other components.
         physics_constraint_components = component_desc["children_components"]
-        physics_constraint_components = { name: desc for name, desc in physics_constraint_components.items() if desc["class"] in physics_constraint_component_classes }
+        physics_constraint_components = { name: desc for name, desc in physics_constraint_components.items() if desc["class"] in unreal_geometry_utils.physics_constraint_component_classes }
         physics_constraint_components = { name: desc for name, desc in physics_constraint_components.items() if not _any_component_transform_absolute(component_desc=desc) }
 
         children_components = component_desc["children_components"]
-        children_components = { name: desc for name, desc in children_components.items() if desc["class"] not in physics_constraint_component_classes }
+        children_components = { name: desc for name, desc in children_components.items() if desc["class"] not in unreal_geometry_utils.physics_constraint_component_classes }
 
+        # Recurse for each child component.
         for child_component_name, child_component_desc in children_components.items():
             spear.log(f"{log_prefix_str}Processing child component: {child_component_name}")
 
@@ -176,7 +175,7 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
                     physics_constraint_component_desc = physics_constraint_component_descs[0]
 
                     transform_current_component_from_child_physics_constraint_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
-                        spear.pipeline.to_spear_transform_from_json_component(json_component=physics_constraint_component_desc)
+                        spear.json.to_spear_transform_from_json_component(json_component=physics_constraint_component_desc)
 
                     transform_node_from_child_physics_constraint_component = spear.math.compose_component_transforms(
                         transforms=[transform_node_from_current_component, transform_current_component_from_child_physics_constraint_component],

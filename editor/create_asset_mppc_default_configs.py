@@ -34,10 +34,6 @@ config_descs = \
 post_process_material_descs = \
 [
     {
-        "name": "custom_stencil",
-        "path": "/SpContent/Materials/PPM_CustomStencil",
-    },
-    {
         "name": "diffuse_color",
         "path": "/SpContent/Materials/PPM_DiffuseColor",
     },
@@ -158,10 +154,9 @@ if __name__ == "__main__":
     ]
 
     console_variables = []
-    engine_show_flag_settings = []
 
     # mimic engine_show_flag_settings["disable_all_except_post_processing_material"] in create_asset_bp_camera_sensor.py
-    engine_show_flag_settings = engine_show_flag_settings + \
+    engine_show_flag_settings = \
     [
         unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
         unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),

@@ -3,7 +3,9 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import cv2
 import numpy as np
+import spear
 
 
 def get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8):
@@ -68,3 +70,19 @@ def normalize_depth(depth, max_depth_range):
 
     eps = 0.000001 # if all finite depth values are equal, avoid dividing by zero
     return np.clip((depth - depth_min) / max(depth_max - depth_min, eps), 0.0, 1.0)
+
+# Save an image to disk. We require the image to have 1 or 3 channels, so callers explicitly drop any alpha channel
+# before saving, rather than accidentally saving an alpha channel that might make the image look transparent.
+def save_image(image, image_file):
+    assert image.ndim == 2 or (image.ndim == 3 and image.shape[2] == 3)
+    spear.log("Saving image: ", image_file)
+    success = cv2.imwrite(image_file, image)
+    assert success
+
+# Save an image for each component in component_descs, where each component_desc is a dict with "name", "data", and
+# "visualize_func" keys. Images are saved to images_dir/name/frame_index.png.
+def save_images(component_descs, images_dir, frame_index):
+    for component_desc in component_descs:
+        image_file = spear.path.realpath(images_dir, component_desc["name"], f"{frame_index:04d}.png")
+        image = component_desc["visualize_func"](data=component_desc["data"])
+        save_image(image=image, image_file=image_file)

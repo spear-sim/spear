@@ -141,18 +141,16 @@ if __name__ == "__main__":
             if "script" in task:
                 script = task["script"]
 
-            if "args" in task:
-                args_string = task["args"]
-            else:
-                args_string = ""
+                if "args" in task:
+                    args_string = task["args"]
+                else:
+                    args_string = ""
 
-            if "across_frames" in task:
-                assert "script" in task
-                across_frames = task["across_frames"]
-            else:
-                across_frames = False
+                if "across_frames" in task:
+                    across_frames = task["across_frames"]
+                else:
+                    across_frames = False
 
-            if "script" in task:
                 if across_frames:
                     editor.python_service.execute_file_across_frames(file=script, args_string=args_string, execution_scope="Private")
                 else:
@@ -160,6 +158,8 @@ if __name__ == "__main__":
                         editor.python_service.execute_file(file=script, args_string=args_string, execution_scope="Private")
                     with instance.end_frame():
                         pass
+            else:
+                assert "across_frames" not in task
 
         # Give the editor a bit of extra time before shutting down to prevent data races with the PakPlatformFile
         # system, which can cause the editor to hang after iterating over scenes.

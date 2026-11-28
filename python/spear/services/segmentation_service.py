@@ -7,7 +7,7 @@ import numpy as np
 import spear
 
 
-_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME = "__SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER__"
+_sp_object_ids_proxy_component_manager_name = "__SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER__"
 
 class SegmentationService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
@@ -27,13 +27,13 @@ class SegmentationService(spear.Service):
         if len(proxy_component_managers) == 0:
             spear.log("No proxy component manager detected, spawning...")
             self.proxy_component_manager = self.unreal_service.spawn_actor(uclass="ASpObjectIdsProxyComponentManager", spawn_parameters={"ObjectFlags": ["RF_Transient"]})
-            self.unreal_service.try_set_stable_name_for_actor(actor=self.proxy_component_manager, stable_name=_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME)
+            self.unreal_service.try_set_stable_name_for_actor(actor=self.proxy_component_manager, stable_name=_sp_object_ids_proxy_component_manager_name)
             self.proxy_component_manager.Initialize()
             spear.log("Finished spawning.")
         elif len(proxy_component_managers) == 1:
-            if _SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME in proxy_component_managers.keys():
+            if _sp_object_ids_proxy_component_manager_name in proxy_component_managers.keys():
                 spear.log("Proxy component manager detected, reinitializing...")
-                self.proxy_component_manager = proxy_component_managers[_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME]
+                self.proxy_component_manager = proxy_component_managers[_sp_object_ids_proxy_component_manager_name]
                 self.proxy_component_manager.Terminate()
                 self.proxy_component_manager.Initialize()
                 spear.log("Finished reinitializing.")

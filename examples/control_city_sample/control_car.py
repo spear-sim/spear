@@ -6,7 +6,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import cv2
 import os
 import shutil
 import spear
@@ -23,20 +22,10 @@ component_descs = \
 [
     {
         "name": "final_tone_curve_hdr",
-        "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "long_name": "DefaultSceneRoot.final_tone_curve_hdr",
         "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     }
 ]
-
-# save an image for each component using the component's visualizer function
-def save_images(images_dir, frame_index):
-    assert not args.skip_save_images
-    for component_desc in component_descs:
-        data = component_desc["data"]
-        image_file = spear.path.realpath(images_dir, component_desc["name"], f"{frame_index:04d}.png")
-        image = component_desc["visualize_func"](data=data)
-        spear.log("Saving image: ", image_file)
-        cv2.imwrite(image_file, image)
 
 
 if __name__ == "__main__":
@@ -148,6 +137,10 @@ if __name__ == "__main__":
             input_action_value={"ValueType": action_value_type, "Value": action_value},
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
+        # set camera pose
+        viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
+
     with instance.end_frame():
 
         # read pixels from camera sensor
@@ -159,7 +152,7 @@ if __name__ == "__main__":
         game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_images(images_dir=images_dir, frame_index=frame_index)
+        spear.image.save_images(component_descs=component_descs, images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #
@@ -185,7 +178,7 @@ if __name__ == "__main__":
             game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
-            save_images(images_dir=images_dir, frame_index=frame_index)
+            spear.image.save_images(component_descs=component_descs, images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
 
     #
@@ -225,7 +218,7 @@ if __name__ == "__main__":
         game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_images(images_dir=images_dir, frame_index=frame_index)
+        spear.image.save_images(component_descs=component_descs, images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #
@@ -266,7 +259,7 @@ if __name__ == "__main__":
             game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
-            save_images(images_dir=images_dir, frame_index=frame_index)
+            spear.image.save_images(component_descs=component_descs, images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
 
     #
@@ -306,7 +299,7 @@ if __name__ == "__main__":
         game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_images(images_dir=images_dir, frame_index=frame_index)
+        spear.image.save_images(component_descs=component_descs, images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #

@@ -54,7 +54,7 @@ def process_scene():
         path_point_times = f["path_point_times"][:]
     with h5py.File(free_space_camera_keyframes_file, "r") as f:
         camera_keyframe_times = f["camera_keyframe_times"][:]
-        camera_keyframe_rotations = f["camera_keyframe_orientations"][:]
+        camera_keyframe_rotations = f["camera_keyframe_rotations"][:]
 
     # Draw each path as a faint polyline (consecutive points are joined by an edge).
     path_edge_indices = np.column_stack([np.arange(path_points.shape[1] - 1), np.arange(1, path_points.shape[1])])

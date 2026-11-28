@@ -15,7 +15,7 @@ blueprint_desc = \
     "static_mesh_component_descs":
     [
         {
-            "name": "sphere_",
+            "name": "sphere",
             "static_mesh_path": "/Engine/BasicShapes/Sphere.Sphere",
             "material_path": "/Game/StarterContent/Materials/M_Ceramic_Tile_Checker.M_Ceramic_Tile_Checker",
             "location": {"x": 0.0, "y": 0.0, "z": 0.0},
@@ -24,7 +24,7 @@ blueprint_desc = \
             "simulate_physics": True
         },
         {
-            "name": "camera_mesh_",
+            "name": "camera_mesh",
             "static_mesh_path": "/Engine/EditorMeshes/MatineeCam_SM.MatineeCam_SM",
             "material_path": "/Engine/EditorMaterials/MatineeCam_mat.MatineeCam_mat",
             "location": {"x": 0.0, "y": 0.0, "z": 35.0},
@@ -32,7 +32,7 @@ blueprint_desc = \
             "scale3d": {"x": 0.25, "y": 0.25, "z": 0.25}
         },
         {
-            "name": "x_axis_",
+            "name": "x_axis",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpContent/Materials/MI_BasicShapeMaterial_Inst_Red.MI_BasicShapeMaterial_Inst_Red",
             "location": {"x": 12.5, "y": 0.0, "z": 0.0},
@@ -41,7 +41,7 @@ blueprint_desc = \
             "collision_profile_name": "NoCollision"
         },
         {
-            "name": "y_axis_",
+            "name": "y_axis",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpContent/Materials/MI_BasicShapeMaterial_Inst_Green.MI_BasicShapeMaterial_Inst_Green",
             "location": {"x": 0.0, "y": 12.5, "z": 0.0},
@@ -50,7 +50,7 @@ blueprint_desc = \
             "collision_profile_name": "NoCollision"
         },
         {
-            "name": "z_axis_",
+            "name": "z_axis",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpContent/Materials/MI_BasicShapeMaterial_Inst_Blue.MI_BasicShapeMaterial_Inst_Blue",
             "location": {"x": 0.0, "y": 0.0, "z": 12.5},
@@ -62,7 +62,7 @@ blueprint_desc = \
     "sp_scene_capture_component_2d_descs":
     [
         {
-            "name": "final_tone_curve_hdr_",
+            "name": "final_tone_curve_hdr",
             "width": 512,
             "height": 512,
             "fov_angle": 90.0,
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component_"
+    component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         subobject_class=unreal.SpStableNameComponent)
 
     # create SpUpdateTransformComponent
-    component_name = "sp_update_transform_component_"
+    component_name = "sp_update_transform_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_update_transform_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
@@ -130,12 +130,12 @@ if __name__ == "__main__":
         subobject_class=unreal.SpUpdateTransformComponent)
 
     sp_update_transform_component = sp_update_transform_component_desc["object"]
-    sp_update_transform_component.set_editor_property(name="source_component_path", value="DefaultSceneRoot.sphere_")
+    sp_update_transform_component.set_editor_property(name="source_component_path", value="DefaultSceneRoot.sphere")
     sp_update_transform_component.set_editor_property(name="destination_component_path", value="DefaultSceneRoot")
     sp_update_transform_component.set_editor_property(name="set_world_location", value=True)
 
     # create SpBasicKeyboardControlComponent
-    component_name = "sp_basic_keyboard_control_component_"
+    component_name = "sp_basic_keyboard_control_component"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[1]["data_handle"] # root component
     sp_basic_keyboard_control_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     sp_basic_keyboard_control_component = sp_basic_keyboard_control_component_desc["object"]
     sp_basic_keyboard_control_component.set_editor_property(name="add_rotation_component_path", value="DefaultSceneRoot")
-    sp_basic_keyboard_control_component.set_editor_property(name="add_force_target_component_path", value="DefaultSceneRoot.sphere_")
+    sp_basic_keyboard_control_component.set_editor_property(name="add_force_target_component_path", value="DefaultSceneRoot.sphere")
     sp_basic_keyboard_control_component.set_editor_property(name="add_force_rotation_component_path", value="DefaultSceneRoot")
 
     sp_user_input_component = sp_basic_keyboard_control_component.get_editor_property(name="sp_user_input_component")

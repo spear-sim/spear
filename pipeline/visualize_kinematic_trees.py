@@ -12,6 +12,7 @@ import os
 import pathlib
 import trimesh
 import spear
+import unreal_geometry_utils
 
 
 parser = argparse.ArgumentParser()
@@ -24,30 +25,7 @@ args = parser.parse_args()
 assert os.path.exists(args.pipeline_dir)
 assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_node", "unique_color_per_component"]
 
-ignore_actors = []
-if args.ignore_actors is not None:
-    ignore_actors = args.ignore_actors
-
 np.random.seed(0)
-
-origin_scale_factor = 1.0
-mesh_opacity = 1.0
-
-c_x_axis = (1.0,  0.0,  0.0)
-c_y_axis = (0.0,  1.0,  0.0)
-c_z_axis = (0.0,  0.0,  1.0)
-
-origin_world = np.array([[0.0,   0.0,   0.0]])
-x_axis_world = np.array([[100.0, 0.0,   0.0]])
-y_axis_world = np.array([[0.0,   100.0, 0.0]])
-z_axis_world = np.array([[0.0,   0.0,   100.0]])
-
-# Swap y and z coordinates to match the visual appearance of the Unreal editor.
-if args.visual_parity_with_unreal:
-    origin_world = origin_world[:,[0,2,1]]
-    x_axis_world = x_axis_world[:,[0,2,1]]
-    y_axis_world = y_axis_world[:,[0,2,1]]
-    z_axis_world = z_axis_world[:,[0,2,1]]
 
 
 def process_scene():
@@ -59,20 +37,11 @@ def process_scene():
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    mayavi.mlab.quiver3d(origin_world[:,0], origin_world[:,1], origin_world[:,2],
-                         x_axis_world[:,0], x_axis_world[:,1], x_axis_world[:,2],
-                         mode="arrow", scale_factor=origin_scale_factor, color=c_x_axis)
-
-    mayavi.mlab.quiver3d(origin_world[:,0], origin_world[:,1], origin_world[:,2],
-                         y_axis_world[:,0], y_axis_world[:,1], y_axis_world[:,2],
-                         mode="arrow", scale_factor=origin_scale_factor, color=c_y_axis)
-
-    mayavi.mlab.quiver3d(origin_world[:,0], origin_world[:,1], origin_world[:,2],
-                         z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
-                         mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
+    unreal_geometry_utils.draw_origin_axes(visual_parity_with_unreal=args.visual_parity_with_unreal)
 
     actors = actors_json
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["stable_name"] not in ignore_actors }
+    if args.ignore_actors is not None:
+        actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["stable_name"] not in args.ignore_actors }
 
     color = (0.75, 0.75, 0.75)
 
@@ -133,7 +102,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
             mesh.vertices = mesh.vertices[:,[0,2,1]]
 
         mayavi.mlab.triangular_mesh(
-            mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
+            mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=unreal_geometry_utils.mesh_opacity)
 
     # Recurse for each child node.
     for child_kinematic_tree_node in kinematic_tree_node["children_nodes"].values():

@@ -16,7 +16,7 @@ import spear
 def initialize_camera(game, bp_camera_sensor_uclass, viewport_desc, buffering_mode):
 
     bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
-    component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
+    component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr", uclass="USpSceneCaptureComponent2D")
     game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_desc=viewport_desc, widths=512, heights=512)
 
     if buffering_mode is not None:
@@ -32,6 +32,13 @@ def terminate_camera(game, bp_camera_sensor, component):
     component.terminate_sp_funcs()
     component.Terminate()
     game.unreal_service.destroy_actor(actor=bp_camera_sensor)
+
+
+def show_images(image_descs):
+    for image_desc in image_descs:
+        cv2.imshow(image_desc["title"], image_desc["image"])
+        cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
@@ -68,6 +75,7 @@ if __name__ == "__main__":
     #
 
     sb_objects = []
+    sb_image_descs = []
 
     for i, y in enumerate(spawn_y_positions):
         spear.log(f"Executing single-buffered frame: spawn object {i + 1}")
@@ -79,14 +87,16 @@ if __name__ == "__main__":
         with instance.end_frame(single_step=True):
             data_bundle = sb_component.read_pixels()
 
-        cv2.imshow(f"Single-buffered frame: expecting {i + 1} object(s)", data_bundle["arrays"]["data"])
-        cv2.waitKey(0)
+        sb_image_descs.append({"title": f"Single-buffered frame: expecting {i + 1} object(s)", "image": data_bundle["arrays"]["data"].copy()})
 
     with instance.begin_frame():
         for obj in sb_objects:
             game.unreal_service.destroy_actor(actor=obj)
-    with instance.end_frame(single_step=True):
+    with instance.end_frame():
         pass
+
+    # show images now that we're out of single_step=True mode
+    show_images(image_descs=sb_image_descs)
 
     #
     # double-buffered: spawn one object per frame, enqueue_read_pixels + read_pixels each frame (1 frame of latency)
@@ -99,6 +109,7 @@ if __name__ == "__main__":
         pass
 
     db_objects = []
+    db_image_descs = []
 
     for i, y in enumerate(spawn_y_positions):
         spear.log(f"Executing double-buffered frame: spawn object {i + 1}")
@@ -111,8 +122,7 @@ if __name__ == "__main__":
         with instance.end_frame(single_step=True):
             data_bundle = db_component.read_pixels()
 
-        cv2.imshow(f"Double-buffered frame: expecting {i} object(s)", data_bundle["arrays"]["data"])
-        cv2.waitKey(0)
+        db_image_descs.append({"title": f"Double-buffered frame: expecting {i} object(s)", "image": data_bundle["arrays"]["data"].copy()})
 
     spear.log("Executing double-buffered frame: no spawn (trailing frame 1)")
 
@@ -121,14 +131,16 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         data_bundle = db_component.read_pixels()
 
-    cv2.imshow(f"Double-buffered frame: expecting {len(spawn_y_positions)} object(s)", data_bundle["arrays"]["data"])
-    cv2.waitKey(0)
+    db_image_descs.append({"title": f"Double-buffered frame: expecting {len(spawn_y_positions)} object(s)", "image": data_bundle["arrays"]["data"].copy()})
 
     with instance.begin_frame():
         for obj in db_objects:
             game.unreal_service.destroy_actor(actor=obj)
-    with instance.end_frame(single_step=True):
+    with instance.end_frame():
         pass
+
+    # show images now that we're out of single_step=True mode
+    show_images(image_descs=db_image_descs)
 
     #
     # triple-buffered: spawn one object per frame, enqueue_read_pixels + read_pixels each frame (2 frames of latency)
@@ -147,6 +159,7 @@ if __name__ == "__main__":
         pass
 
     tb_objects = []
+    tb_image_descs = []
 
     for i, y in enumerate(spawn_y_positions):
         spear.log(f"Executing triple-buffered frame: spawn object {i + 1}")
@@ -159,8 +172,7 @@ if __name__ == "__main__":
         with instance.end_frame(single_step=True):
             data_bundle = tb_component.read_pixels()
 
-        cv2.imshow(f"Triple-buffered frame: expecting {max(i - 1, 0)} object(s)", data_bundle["arrays"]["data"])
-        cv2.waitKey(0)
+        tb_image_descs.append({"title": f"Triple-buffered frame: expecting {max(i - 1, 0)} object(s)", "image": data_bundle["arrays"]["data"].copy()})
 
     spear.log("Executing triple-buffered frame: no spawn (trailing frame 1)")
 
@@ -169,8 +181,7 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         data_bundle = tb_component.read_pixels()
 
-    cv2.imshow(f"Triple-buffered frame: expecting {len(spawn_y_positions) - 1} object(s)", data_bundle["arrays"]["data"])
-    cv2.waitKey(0)
+    tb_image_descs.append({"title": f"Triple-buffered frame: expecting {len(spawn_y_positions) - 1} object(s)", "image": data_bundle["arrays"]["data"].copy()})
 
     spear.log("Executing triple-buffered frame: no spawn (trailing frame 2)")
 
@@ -179,15 +190,16 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         data_bundle = tb_component.read_pixels()
 
-    cv2.imshow(f"Triple-buffered frame: expecting {len(spawn_y_positions)} object(s)", data_bundle["arrays"]["data"])
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    tb_image_descs.append({"title": f"Triple-buffered frame: expecting {len(spawn_y_positions)} object(s)", "image": data_bundle["arrays"]["data"].copy()})
 
     with instance.begin_frame():
         for obj in tb_objects:
             game.unreal_service.destroy_actor(actor=obj)
-    with instance.end_frame(single_step=True):
+    with instance.end_frame():
         pass
+
+    # show images now that we're out of single_step=True mode
+    show_images(image_descs=tb_image_descs)
 
     # terminate
     with instance.begin_frame():

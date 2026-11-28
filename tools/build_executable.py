@@ -38,7 +38,7 @@ if __name__ == "__main__":
     if sys.platform == "win32":
         archive_dir           = spear.path.realpath(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned")
         run_uat_platform_args = []
-        unreal_tmp_dir        = ""
+        unreal_tmp_dir        = None
 
     elif sys.platform == "darwin":
         archive_dir           = spear.path.realpath(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned")
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     elif sys.platform == "linux":
         archive_dir           = spear.path.realpath(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}")
         run_uat_platform_args = []
-        unreal_tmp_dir        = ""
+        unreal_tmp_dir        = None
 
     else:
         assert False
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
 
-    if os.path.exists(unreal_tmp_dir):
+    if unreal_tmp_dir is not None and os.path.exists(unreal_tmp_dir):
         spear.log("Unreal Engine cache directory exists, removing: ", unreal_tmp_dir)
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         assert num_signatures is not None
 
         if num_signatures > 0:
-            spear.log("File already has one ore more signatures, creating backup: ", bootstrap_backup_bin)
+            spear.log("File already has one or more signatures, creating backup: ", bootstrap_backup_bin)
             shutil.copy(bootstrap_bin, bootstrap_backup_bin)
 
             spear.log("Removing all signatures from file: ", bootstrap_bin)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
-    if os.path.exists(unreal_tmp_dir):
+    if unreal_tmp_dir is not None and os.path.exists(unreal_tmp_dir):
         spear.log("Unreal Engine cache directory exists, removing: ", unreal_tmp_dir)
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 

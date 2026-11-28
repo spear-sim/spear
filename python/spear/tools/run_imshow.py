@@ -7,16 +7,20 @@ import argparse
 import cv2
 import sys
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--path", required=True)
 parser.add_argument("--name", default="spear.imshow()")
 args = parser.parse_args()
 
-image = cv2.imread(args.path, cv2.IMREAD_UNCHANGED)
-if image is None:
-    print(f"Failed to load image: {args.path}", file=sys.stderr, flush=True)
-    sys.exit(1)
 
-cv2.imshow(args.name, image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+
+    image = cv2.imread(args.path, cv2.IMREAD_UNCHANGED)
+    if image is None:
+        print(f"Failed to load image: {args.path}", file=sys.stderr, flush=True)
+        sys.exit(1)
+
+    cv2.imshow(args.name, image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

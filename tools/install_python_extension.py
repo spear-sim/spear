@@ -58,12 +58,12 @@ if __name__ == "__main__":
         else:
             optimization_flags = "-O3"
 
-        common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=11.0"
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min={spear.tools.get_macos_deployment_target()}"
         cmake_cxx_flags = common_cxx_flags
         cmake_cxx_standard_libraries = ""
         cmake_exe_linker_flags = ""
 
-        cmd_env_vars = {"MACOSX_DEPLOYMENT_TARGET": "11.0"}
+        cmd_env_vars = {"MACOSX_DEPLOYMENT_TARGET": spear.tools.get_macos_deployment_target()}
 
     elif sys.platform == "linux":
 
@@ -72,27 +72,11 @@ if __name__ == "__main__":
         assert args.cxx_compiler is None
 
         unreal_engine_dir = spear.path.realpath(args.unreal_engine_dir)
+        unreal_linux_toolchain = spear.tools.get_unreal_linux_toolchain(unreal_engine_dir=unreal_engine_dir)
+        linux_libcpp_include_dir = unreal_linux_toolchain["libcpp_include_dir"]
+        linux_libcpp_lib_dir = unreal_linux_toolchain["libcpp_lib_dir"]
 
-        linux_clang_path_template = spear.path.realpath(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*")
-        linux_clang_paths = glob.glob(linux_clang_path_template)
-        assert len(linux_clang_paths) == 1
-        linux_clang_path = linux_clang_paths[0]
-
-        spear.log("Found Unreal clang: ", linux_clang_path)
-
-        linux_clang_bin_dir      = spear.path.realpath(linux_clang_path, "x86_64-unknown-linux-gnu", "bin")
-        linux_libcpp_include_dir = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
-        linux_libcpp_lib_dir     = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
-
-        assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
-        assert os.path.isdir(linux_libcpp_lib_dir) and os.listdir(linux_libcpp_lib_dir)
-
-        spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
-        spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
-
-        # We don't use spear.path.realpath(...) here, because clang++ is typically a symlink to clang, and clang decides
-        # whether to compile C or C++ based on the name it is invoked with.
-        cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
+        cxx_compiler = unreal_linux_toolchain["cxx_compiler"]
 
         # Don't use -fexperimental-library here, because this will attempt to link against a libc++ library
         # that doesn't ship with UE. Instead, enable the _LIBCPP_ENABLE_EXPERIMENTAL macro directly, which is
@@ -158,7 +142,6 @@ if __name__ == "__main__":
 
     # generate dSYM debug symbols on macOS
     if args.debug and sys.platform == "darwin":
-        python_ext_dir = spear.path.realpath(os.path.dirname(__file__), "..", "python_ext")
         so_files = glob.glob(spear.path.realpath(python_ext_dir, "**", "*.so"), recursive=True)
         so_files = [ so_file for so_file in so_files if ".dSYM" not in so_file ] # skip DWARF files inside previously generated .dSYM bundles
         for so_file in so_files:

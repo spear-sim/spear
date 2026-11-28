@@ -81,7 +81,7 @@ def process_scene():
 
         camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         camera_sensor = game.unreal_service.spawn_actor(uclass=camera_sensor_uclass)
-        segmentation_component = game.unreal_service.get_component_by_name(actor=camera_sensor, component_name="DefaultSceneRoot.sp_object_ids_uint8_", uclass="USpSceneCaptureComponent2D")
+        segmentation_component = game.unreal_service.get_component_by_name(actor=camera_sensor, component_name="DefaultSceneRoot.sp_object_ids_uint8", uclass="USpSceneCaptureComponent2D")
         segmentation_component.Width = camera_resolution
         segmentation_component.Height = camera_resolution
         segmentation_component.ProjectionType = "Perspective"
@@ -169,7 +169,7 @@ def process_scene():
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_camera_keyframes_file, "w") as f:
         f.create_dataset("camera_keyframe_times", data=camera_keyframe_times)
-        f.create_dataset("camera_keyframe_orientations", data=camera_keyframe_rotations)
+        f.create_dataset("camera_keyframe_rotations", data=camera_keyframe_rotations)
 
     spear.log("Done.")
 

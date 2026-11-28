@@ -3,6 +3,7 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import glob
 import ntpath
 import os
 import posixpath
@@ -190,6 +191,40 @@ def get_target_platform():
         return "Linux"
     else:
         assert False
+
+
+#
+# Helper functions for building C++ code outside of the Unreal Build Tool. Used by build_third_party_libs.py and
+# install_python_extension.py.
+#
+
+def get_macos_deployment_target():
+    return "11.0"
+
+# On Linux, we build with Unreal's clang and libc++ so our code is ABI-compatible with Unreal.
+def get_unreal_linux_toolchain(unreal_engine_dir):
+    clang_path_template = spear.path.realpath(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*")
+    clang_paths = glob.glob(clang_path_template)
+    assert len(clang_paths) == 1
+    clang_path = clang_paths[0]
+
+    spear.log("Found Unreal clang: ", clang_path)
+
+    clang_bin_dir      = spear.path.realpath(clang_path, "x86_64-unknown-linux-gnu", "bin")
+    libcpp_include_dir = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
+    libcpp_lib_dir     = spear.path.realpath(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
+
+    assert os.path.isdir(libcpp_include_dir) and os.listdir(libcpp_include_dir)
+    assert os.path.isdir(libcpp_lib_dir) and os.listdir(libcpp_lib_dir)
+
+    spear.log("Found Unreal libc++ include dir: ", libcpp_include_dir)
+    spear.log("Found Unreal libc++ lib dir:     ", libcpp_lib_dir)
+
+    # We don't use spear.path.realpath(...) here, because clang++ is typically a symlink to clang, and clang decides
+    # whether to compile C or C++ based on the name it is invoked with.
+    cxx_compiler = os.path.join(clang_bin_dir, "clang++")
+
+    return {"cxx_compiler": cxx_compiler, "libcpp_include_dir": libcpp_include_dir, "libcpp_lib_dir": libcpp_lib_dir}
 
 
 #
